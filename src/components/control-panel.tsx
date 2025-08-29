@@ -103,6 +103,8 @@ const resumeSchema = z.object({
     itemDescriptionColor: z.string(),
     linkColor: z.string(),
     secondaryColor: z.string(),
+    borderColor: z.string(),
+    borderWidth: z.number(),
   }),
 });
 
@@ -155,7 +157,7 @@ export function ControlPanel({
     onResumeUpdate({ [fieldName]: value });
   };
 
-  const handleThemeChange = (field: keyof ResumeData['theme'], value: string) => {
+  const handleThemeChange = (field: keyof ResumeData['theme'], value: string | number) => {
     const currentTheme = form.getValues('theme');
     const newTheme = { ...currentTheme, [field]: value };
     onResumeUpdate({ theme: newTheme });
@@ -287,6 +289,7 @@ export function ControlPanel({
     { name: 'secondaryColor', label: 'Secondary Text' },
     { name: 'linkColor', label: 'Link' },
     { name: 'itemDescriptionColor', label: 'Description' },
+    { name: 'borderColor', label: 'Border Color' },
   ] as const;
 
   return (
@@ -414,6 +417,27 @@ export function ControlPanel({
                       )}
                     />
                   ))}
+                  <FormField
+                      control={form.control}
+                      name="theme.borderWidth"
+                      render={({ field }) => (
+                        <FormItem className="grid grid-cols-3 items-center gap-4">
+                          <FormLabel>Border Width</FormLabel>
+                          <FormControl>
+                            <div className="col-span-2 flex items-center gap-2">
+                                <Slider
+                                    value={[field.value]}
+                                    onValueChange={(values) => handleThemeChange('borderWidth', values[0])}
+                                    min={0}
+                                    max={5}
+                                    step={0.5}
+                                />
+                                <span className="text-sm w-12 text-right">{field.value}px</span>
+                            </div>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
               </CardContent>
             </Card>
           </AccordionContent>

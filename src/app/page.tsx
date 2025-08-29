@@ -107,6 +107,8 @@ const initialResume: ResumeData = {
     secondaryColor: 'hsl(210 10% 23%)',
     linkColor: 'hsl(210 86% 53%)',
     itemDescriptionColor: 'hsl(210 20% 45%)',
+    borderColor: 'hsl(210 86% 53%)',
+    borderWidth: 2,
   },
 };
 

@@ -122,7 +122,10 @@ const DraggableSection = ({ section, resume, onUpdate, children }: { section: Se
      <section ref={setNodeRef} style={style} className="relative group/section">
         <div
           className="flex items-center gap-3 text-lg font-semibold font-headline pb-2 mb-4"
-          style={{ borderBottom: '2px solid var(--resume-section-title-color)', color: 'var(--resume-section-title-color)' }}
+          style={{ 
+            borderBottom: `${resume.theme.borderWidth}px solid var(--resume-border-color)`, 
+            color: 'var(--resume-section-title-color)' 
+          }}
         >
           <EditableField value={section.title} onSave={handleTitleUpdate} as="h2" className="flex-grow" />
            <div className="flex items-center gap-1 no-print">
@@ -300,7 +303,7 @@ export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpda
             <DraggableSection key={sectionId} section={sectionData} resume={resume} onUpdate={onUpdate}>
               <div className="flex flex-wrap gap-2">
                 {skills.map((skill, index) => (
-                  <div key={index} style={{backgroundColor: 'var(--resume-secondary-color)', color: 'white'}} className="rounded-full px-3 py-1 text-sm">
+                  <div key={index} style={{backgroundColor: 'var(--resume-secondary-color)', color: 'white'}} className="rounded-full px-3 py-1 text-sm bg-secondary text-secondary-foreground">
                     <EditableField value={skill} onSave={(v) => handleUpdate(`skills.${index}`, v)} />
                   </div>
                 ))}
@@ -332,6 +335,7 @@ export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpda
             '--resume-item-description-color': theme.itemDescriptionColor,
             '--resume-link-color': theme.linkColor,
             '--resume-secondary-color': theme.secondaryColor,
+            '--resume-border-color': theme.borderColor,
         } as React.CSSProperties}
     >
       <div className="flex flex-col gap-8">
