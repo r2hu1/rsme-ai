@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { debounce } from 'lodash';
 
 import { parseExistingResume } from '@/ai/flows/parse-existing-resume';
@@ -71,9 +71,9 @@ export default function Home() {
     useState<ContentEvaluation | null>(null);
   const { toast } = useToast();
 
-  const handleResumeUpdate = debounce((newData: ResumeData) => {
+  const handleResumeUpdate = useCallback(debounce((newData: ResumeData) => {
     setResumeData(newData);
-  }, 300);
+  }, 300), []);
 
   const handleParseResume = async (text: string) => {
     setLoading('parse');

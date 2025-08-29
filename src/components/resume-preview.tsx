@@ -3,22 +3,29 @@
 import React from 'react';
 import type { ResumeData } from '@/lib/types';
 import { Mail, Phone, User, Briefcase, GraduationCap, Wrench, Sparkles, FolderGit2, Link } from 'lucide-react';
+import { debounce } from 'lodash';
 
 const EditableField = ({ value, onSave, multiline = false }: { value: string; onSave: (newValue: string) => void; multiline?: boolean }) => {
   const fieldRef = React.useRef<HTMLDivElement>(null);
 
+  const prevValue = React.useRef(value);
+
   React.useEffect(() => {
-    if (fieldRef.current && fieldRef.current.innerHTML !== value) {
-      fieldRef.current.innerHTML = value;
+    if (fieldRef.current && value !== prevValue.current && document.activeElement !== fieldRef.current) {
+        fieldRef.current.innerHTML = value;
     }
+    prevValue.current = value;
   }, [value]);
 
   const handleBlur = () => {
     if (fieldRef.current) {
-      onSave(fieldRef.current.innerHTML);
+      const newValue = fieldRef.current.innerHTML;
+      if (newValue !== value) {
+        onSave(newValue);
+      }
     }
   };
-
+  
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Enter' && !multiline) {
       e.preventDefault();
@@ -97,7 +104,7 @@ export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpda
               </h2>
               <div className="space-y-6">
                 {experience.map((exp, index) => (
-                  <div key={`${exp.title}-${index}`} className="space-y-1">
+                  <div key={`${exp.company}-${index}`} className="space-y-1">
                     <div className="flex justify-between items-baseline">
                       <h3 className="font-semibold"><EditableField value={exp.title || ''} onSave={(v) => handleUpdate(`experience.${index}.title`, v)} /></h3>
                       <p className="text-xs text-muted-foreground"><EditableField value={exp.dates || ''} onSave={(v) => handleUpdate(`experience.${index}.dates`, v)} /></p>
