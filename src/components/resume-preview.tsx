@@ -277,7 +277,7 @@ export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpda
             <DraggableSection key={sectionId} section={sectionData} resume={resume} onUpdate={onUpdate}>
               <div className="flex flex-wrap gap-2">
                 {skills.map((skill, index) => (
-                  <div key={`${skill}-${index}`} className="bg-secondary text-secondary-foreground rounded-full px-3 py-1 text-sm">
+                  <div key={index} className="bg-secondary text-secondary-foreground rounded-full px-3 py-1 text-sm">
                     <EditableField value={skill} onSave={(v) => handleUpdate(`skills.${index}`, v)} />
                   </div>
                 ))}
