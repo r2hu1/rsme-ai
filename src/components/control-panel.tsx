@@ -123,13 +123,13 @@ export function ControlPanel({
     name: "projects",
   });
 
-  const handleFormChange = () => {
+  React.useEffect(() => {
     const subscription = form.watch((value) => {
       onResumeUpdate(value as ResumeData);
     });
     return () => subscription.unsubscribe();
-  };
-  React.useEffect(handleFormChange, [form.watch, onResumeUpdate]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.watch, onResumeUpdate]);
 
 
   return (

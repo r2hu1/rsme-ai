@@ -5,8 +5,8 @@ import type { ResumeData } from '@/lib/types';
 import { Mail, Phone, User, Briefcase, GraduationCap, Wrench, Sparkles, FolderGit2, Link } from 'lucide-react';
 import { debounce } from 'lodash';
 
-const EditableField = ({ value, onSave, multiline = false }: { value: string; onSave: (newValue: string) => void; multiline?: boolean }) => {
-  const fieldRef = React.useRef<HTMLDivElement>(null);
+const EditableField = ({ value, onSave, multiline = false, as: Component = 'div' }: { value: string; onSave: (newValue: string) => void; multiline?: boolean, as?: React.ElementType }) => {
+  const fieldRef = React.useRef<HTMLElement>(null);
 
   React.useEffect(() => {
     if (fieldRef.current && value !== fieldRef.current.innerHTML) {
@@ -31,7 +31,7 @@ const EditableField = ({ value, onSave, multiline = false }: { value: string; on
   };
 
   return (
-    <div
+    <Component
       ref={fieldRef}
       contentEditable
       suppressContentEditableWarning
@@ -62,15 +62,15 @@ export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpda
       <div className="flex flex-col gap-8">
         {/* Header */}
         <header className="text-center border-b pb-6">
-          {name && <h1 className="text-4xl font-bold font-headline tracking-tight"><EditableField value={name} onSave={(v) => handleUpdate('name', v)} /></h1>}
+          {name != null && <h1 className="text-4xl font-bold font-headline tracking-tight"><EditableField value={name} onSave={(v) => handleUpdate('name', v)} as="div" /></h1>}
           <div className="flex justify-center items-center gap-6 mt-3 text-sm text-muted-foreground">
-            {email && (
+            {email != null && (
               <div className="flex items-center gap-2 hover:text-primary transition-colors">
                 <Mail className="h-4 w-4" />
                 <EditableField value={email} onSave={(v) => handleUpdate('email', v)} />
               </div>
             )}
-            {phone && (
+            {phone != null && (
               <div className="flex items-center gap-2">
                 <Phone className="h-4 w-4" />
                 <EditableField value={phone} onSave={(v) => handleUpdate('phone', v)} />
@@ -82,7 +82,7 @@ export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpda
         {/* Main Content */}
         <main className="grid grid-cols-1 gap-10">
           {/* Summary */}
-          {summary && (
+          {summary != null && (
             <section>
               <h2 className="flex items-center gap-3 text-lg font-semibold font-headline border-b-2 border-primary pb-2 mb-4">
                 <User className="h-5 w-5 text-primary" />
@@ -103,11 +103,11 @@ export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpda
                 {experience.map((exp, index) => (
                   <div key={`${exp.company}-${index}`} className="space-y-1">
                     <div className="flex justify-between items-baseline">
-                      <h3 className="font-semibold"><EditableField value={exp.title || ''} onSave={(v) => handleUpdate(`experience.${index}.title`, v)} /></h3>
-                      <p className="text-xs text-muted-foreground"><EditableField value={exp.dates || ''} onSave={(v) => handleUpdate(`experience.${index}.dates`, v)} /></p>
+                      <h3 className="font-semibold"><EditableField value={exp.title || ''} onSave={(v) => handleUpdate(`experience.${index}.title`, v)} as="div" /></h3>
+                      <div className="text-xs text-muted-foreground"><EditableField value={exp.dates || ''} onSave={(v) => handleUpdate(`experience.${index}.dates`, v)} /></div>
                     </div>
-                    <p className="text-sm font-medium text-primary"><EditableField value={exp.company || ''} onSave={(v) => handleUpdate(`experience.${index}.company`, v)} /></p>
-                    <p className="text-sm text-muted-foreground pt-1"><EditableField value={exp.description || ''} onSave={(v) => handleUpdate(`experience.${index}.description`, v)} multiline /></p>
+                    <div className="text-sm font-medium text-primary"><EditableField value={exp.company || ''} onSave={(v) => handleUpdate(`experience.${index}.company`, v)} /></div>
+                    <div className="text-sm text-muted-foreground pt-1"><EditableField value={exp.description || ''} onSave={(v) => handleUpdate(`experience.${index}.description`, v)} multiline /></div>
                   </div>
                 ))}
               </div>
@@ -125,8 +125,8 @@ export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpda
                 {projects.map((project, index) => (
                   <div key={`${project.name}-${index}`} className="space-y-1 break-inside-avoid">
                     <div className="flex justify-between items-baseline">
-                      <h3 className="font-semibold"><EditableField value={project.name || ''} onSave={(v) => handleUpdate(`projects.${index}.name`, v)} /></h3>
-                      <p className="text-xs text-muted-foreground"><EditableField value={project.dates || ''} onSave={(v) => handleUpdate(`projects.${index}.dates`, v)} /></p>
+                      <h3 className="font-semibold"><EditableField value={project.name || ''} onSave={(v) => handleUpdate(`projects.${index}.name`, v)} as="div" /></h3>
+                      <div className="text-xs text-muted-foreground"><EditableField value={project.dates || ''} onSave={(v) => handleUpdate(`projects.${index}.dates`, v)} /></div>
                     </div>
                     {project.url && (
                         <div className="flex items-center gap-2 text-sm text-primary hover:underline">
@@ -134,7 +134,7 @@ export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpda
                             <EditableField value={project.url} onSave={(v) => handleUpdate(`projects.${index}.url`, v)} />
                         </div>
                     )}
-                    <p className="text-sm text-muted-foreground pt-1"><EditableField value={project.description || ''} onSave={(v) => handleUpdate(`projects.${index}.description`, v)} multiline /></p>
+                    <div className="text-sm text-muted-foreground pt-1"><EditableField value={project.description || ''} onSave={(v) => handleUpdate(`projects.${index}.description`, v)} multiline /></div>
                   </div>
                 ))}
               </div>
@@ -152,10 +152,10 @@ export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpda
                 {education.map((edu, index) => (
                   <div key={`${edu.institution}-${index}`}>
                     <div className="flex justify-between items-baseline">
-                      <h3 className="font-semibold"><EditableField value={edu.institution || ''} onSave={(v) => handleUpdate(`education.${index}.institution`, v)} /></h3>
-                      <p className="text-xs text-muted-foreground"><EditableField value={edu.dates || ''} onSave={(v) => handleUpdate(`education.${index}.dates`, v)} /></p>
+                      <h3 className="font-semibold"><EditableField value={edu.institution || ''} onSave={(v) => handleUpdate(`education.${index}.institution`, v)} as="div" /></h3>
+                      <div className="text-xs text-muted-foreground"><EditableField value={edu.dates || ''} onSave={(v) => handleUpdate(`education.${index}.dates`, v)} /></div>
                     </div>
-                    <p className="text-sm text-muted-foreground"><EditableField value={edu.degree || ''} onSave={(v) => handleUpdate(`education.${index}.degree`, v)} /></p>
+                    <div className="text-sm text-muted-foreground"><EditableField value={edu.degree || ''} onSave={(v) => handleUpdate(`education.${index}.degree`, v)} /></div>
                   </div>
                 ))}
               </div>
