@@ -14,6 +14,8 @@ import {
   Palette,
   Printer,
 } from 'lucide-react';
+import { useDebounceCallback } from 'usehooks-ts'
+
 
 import { parseExistingResume } from '@/ai/flows/parse-existing-resume';
 import { scoreSkills } from '@/ai/flows/score-skills-based-on-relevance';
@@ -112,7 +114,7 @@ export default function Home() {
   useEffect(() => {
     // This function converts HSL string to just the numbers for the CSS variables
     const setCssVar = (name: string, value: string) => {
-      const hslValues = value.match(/(\d+\s*%?\s*){3}/)?.[0];
+      const hslValues = value.match(/(\d+(\.\d+)?\s*%?\s*){3}/)?.[0];
       if (hslValues) {
         document.documentElement.style.setProperty(name, hslValues);
       }

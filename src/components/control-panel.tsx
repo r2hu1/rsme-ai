@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -17,6 +17,7 @@ import {
   Palette,
 } from 'lucide-react';
 import { produce } from 'immer';
+import { useDebounceCallback } from 'usehooks-ts'
 
 import {
   Accordion,
@@ -116,16 +117,20 @@ export function ControlPanel({
   const form = useForm<ResumeData>({
     resolver: zodResolver(resumeSchema),
     values: resumeData,
-    mode: 'onBlur',
   });
 
-  React.useEffect(() => {
+  const debouncedOnResumeUpdate = useDebounceCallback(onResumeUpdate, 300);
+
+  useEffect(() => {
+    const subscription = form.watch((value) => {
+      debouncedOnResumeUpdate(value as Partial<ResumeData>);
+    });
+    return () => subscription.unsubscribe();
+  }, [form, debouncedOnResumeUpdate]);
+
+  useEffect(() => {
     form.reset(resumeData);
   }, [resumeData, form]);
-  
-  const triggerUpdate = (data: Partial<ResumeData>) => {
-    onResumeUpdate(data);
-  };
 
   const { fields: expFields, append: appendExp, remove: removeExp } = useFieldArray({
     control: form.control,
@@ -149,16 +154,7 @@ export function ControlPanel({
   
   const handleItemRemove = (remover: (index: number) => void, index: number, fieldName: keyof ResumeData) => {
     remover(index);
-    triggerUpdate({ [fieldName]: form.getValues(fieldName as any) });
-  };
-
-  const handleBlur = () => {
-    form.handleSubmit(data => {
-      // Only update if there are actual changes to avoid loops
-      if (JSON.stringify(data) !== JSON.stringify(resumeData)) {
-        triggerUpdate(data);
-      }
-    })();
+    onResumeUpdate({ [fieldName]: form.getValues(fieldName as any) });
   };
 
   const addCustomSection = () => {
@@ -182,18 +178,6 @@ export function ControlPanel({
     onResumeUpdate({ sections: updatedSections });
   };
 
-  const handleThemeChange = (colorType: keyof ResumeData['theme'], value: string) => {
-    triggerUpdate({
-      theme: { ...resumeData.theme, [colorType]: value }
-    });
-  };
-
-  const handleBorderWidthChange = (value: number[]) => {
-    triggerUpdate({
-      theme: { ...resumeData.theme, borderWidth: value[0] }
-    });
-  };
-  
   const hexToHsl = (hex: string): string => {
     let r = 0, g = 0, b = 0;
     if (hex.length === 4) {
@@ -322,30 +306,93 @@ export function ControlPanel({
           <Card>
             <CardHeader><CardTitle className="flex items-center gap-2"><Palette/> Theme</CardTitle></CardHeader>
             <CardContent className="grid gap-4">
-              {(Object.keys(resumeData.theme) as (keyof ResumeData['theme'])[]).filter(k => k.includes('Color')).map(key => (
-                  <div key={key} className="grid grid-cols-3 items-center gap-4">
-                  <Label htmlFor={key} className="capitalize">{key.replace('Color', '')}</Label>
-                  <Input
-                    id={key}
-                    type="color"
-                    value={hslToHex(resumeData.theme[key])}
-                    onChange={(e) => handleThemeChange(key, hexToHsl(e.target.value))}
-                    className="col-span-2 h-8 p-1"
-                  />
-                </div>
-              ))}
-              <div className="grid grid-cols-3 items-center gap-4">
-                <Label htmlFor="borderWidth">Border Width</Label>
-                 <Slider
-                    id="borderWidth"
-                    min={0}
-                    max={8}
-                    step={1}
-                    value={[resumeData.theme.borderWidth]}
-                    onValueChange={handleBorderWidthChange}
-                    className="col-span-2"
-                  />
-              </div>
+              <FormField
+                control={form.control}
+                name="theme.primaryColor"
+                render={({ field }) => (
+                  <FormItem className="grid grid-cols-3 items-center gap-4">
+                    <FormLabel>Primary</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="color"
+                        value={hslToHex(field.value)}
+                        onChange={(e) => field.onChange(hexToHsl(e.target.value))}
+                        className="col-span-2 h-8 p-1"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="theme.accentColor"
+                render={({ field }) => (
+                  <FormItem className="grid grid-cols-3 items-center gap-4">
+                    <FormLabel>Accent</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="color"
+                        value={hslToHex(field.value)}
+                        onChange={(e) => field.onChange(hexToHsl(e.target.value))}
+                        className="col-span-2 h-8 p-1"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="theme.textColor"
+                render={({ field }) => (
+                  <FormItem className="grid grid-cols-3 items-center gap-4">
+                    <FormLabel>Text</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="color"
+                        value={hslToHex(field.value)}
+                        onChange={(e) => field.onChange(hexToHsl(e.target.value))}
+                        className="col-span-2 h-8 p-1"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="theme.mutedTextColor"
+                render={({ field }) => (
+                  <FormItem className="grid grid-cols-3 items-center gap-4">
+                    <FormLabel>Muted Text</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="color"
+                        value={hslToHex(field.value)}
+                        onChange={(e) => field.onChange(hexToHsl(e.target.value))}
+                        className="col-span-2 h-8 p-1"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="theme.borderWidth"
+                render={({ field }) => (
+                  <FormItem className="grid grid-cols-3 items-center gap-4">
+                    <FormLabel>Border Width</FormLabel>
+                    <FormControl>
+                      <Slider
+                        min={0}
+                        max={8}
+                        step={1}
+                        value={[field.value]}
+                        onValueChange={(v) => field.onChange(v[0])}
+                        className="col-span-2"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+                />
             </CardContent>
           </Card>
         </AccordionContent>
@@ -359,7 +406,7 @@ export function ControlPanel({
         </AccordionTrigger>
         <AccordionContent className="pt-2">
           <Form {...form}>
-            <form onBlur={handleBlur} className="space-y-6">
+            <form className="space-y-6">
               <Card>
                 <CardHeader><CardTitle>Personal Details</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
