@@ -29,7 +29,7 @@ import { ResumePreview } from "@/components/resume-preview";
 import { ControlPanel } from "@/components/control-panel";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import {
 	Dialog,
 	DialogContent,
@@ -401,52 +401,54 @@ export default function Home() {
 							improvement.
 						</DialogDescription>
 					</DialogHeader>
-					{contentEvaluation && (
-						<div className="grid gap-6 pt-4">
-							<div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-								<div className="rounded-lg border bg-card p-4 text-center">
-									<Label>Clarity Score</Label>
-									<p className="text-3xl font-bold text-primary">
-										{contentEvaluation.clarityScore}
-									</p>
+					<ScrollArea className="!max-h-[500px]">
+						{contentEvaluation && (
+							<div className="grid gap-6 pt-4">
+								<div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+									<div className="rounded-lg border bg-card p-4 text-center">
+										<Label>Clarity Score</Label>
+										<p className="text-3xl font-bold text-primary">
+											{contentEvaluation.clarityScore}
+										</p>
+									</div>
+									<div className="rounded-lg border bg-card p-4 text-center">
+										<Label>Grammar Score</Label>
+										<p className="text-3xl font-bold text-primary">
+											{contentEvaluation.grammarScore}
+										</p>
+									</div>
+									<div className="rounded-lg border bg-card p-4 text-center">
+										<Label>ATS Score</Label>
+										<p className="text-3xl font-bold text-primary">
+											{contentEvaluation.atsScore}
+										</p>
+									</div>
 								</div>
-								<div className="rounded-lg border bg-card p-4 text-center">
-									<Label>Grammar Score</Label>
-									<p className="text-3xl font-bold text-primary">
-										{contentEvaluation.grammarScore}
-									</p>
-								</div>
-								<div className="rounded-lg border bg-card p-4 text-center">
-									<Label>ATS Score</Label>
-									<p className="text-3xl font-bold text-primary">
-										{contentEvaluation.atsScore}
-									</p>
-								</div>
-							</div>
 
-							<div>
-								<h3 className="font-semibold mb-2 flex items-center gap-2">
-									<Star className="h-4 w-4 text-primary" />
-									AI Feedback
-								</h3>
-								<p className="text-sm text-muted-foreground bg-muted p-3 rounded-md border">
-									{contentEvaluation.effectivenessFeedback}
-								</p>
-							</div>
+								<div>
+									<h3 className="font-semibold mb-2 flex items-center gap-2">
+										<Star className="h-4 w-4 text-primary" />
+										AI Feedback
+									</h3>
+									<p className="text-sm text-muted-foreground bg-muted p-3 rounded-md border">
+										{contentEvaluation.effectivenessFeedback}
+									</p>
+								</div>
 
-							<div>
-								<h3 className="font-semibold mb-2 flex items-center gap-2">
-									<ClipboardCheck className="h-4 w-4 text-primary" />
-									Suggested Fixes
-								</h3>
-								<ul className="space-y-2 text-sm text-muted-foreground list-disc pl-5 bg-muted p-3 rounded-md border">
-									{contentEvaluation.suggestedFixes.map((fix, index) => (
-										<li key={index}>{fix}</li>
-									))}
-								</ul>
+								<div>
+									<h3 className="font-semibold mb-2 flex items-center gap-2">
+										<ClipboardCheck className="h-4 w-4 text-primary" />
+										Suggested Fixes
+									</h3>
+									<ul className="space-y-2 text-sm text-muted-foreground list-disc pl-5 bg-muted p-3 rounded-md border">
+										{contentEvaluation.suggestedFixes.map((fix, index) => (
+											<li key={index}>{fix}</li>
+										))}
+									</ul>
+								</div>
 							</div>
-						</div>
-					)}
+						)}
+					</ScrollArea>
 					<DialogFooter>
 						<Button
 							variant="ghost"
