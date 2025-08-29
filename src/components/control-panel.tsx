@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -16,8 +16,10 @@ import {
   Settings,
   Palette,
   Sparkles,
+  Upload,
 } from 'lucide-react';
 import { produce } from 'immer';
+import * as pdfjs from 'pdfjs-dist';
 
 import {
   Accordion,
@@ -46,6 +48,9 @@ import { Progress } from './ui/progress';
 import { Switch } from './ui/switch';
 import { Slider } from './ui/slider';
 import { Separator } from './ui/separator';
+
+// Setup PDF.js worker
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 interface ControlPanelProps {
   resumeData: ResumeData;
@@ -112,6 +117,7 @@ export function ControlPanel({
   const [importText, setImportText] = useState('');
   const [generatePrompt, setGeneratePrompt] = useState('');
   const [jobDescription, setJobDescription] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<ResumeData>({
     resolver: zodResolver(resumeSchema),
@@ -172,6 +178,34 @@ export function ControlPanel({
       }
     });
     onResumeUpdate({ sections: updatedSections });
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const arrayBuffer = e.target?.result;
+      if (arrayBuffer instanceof ArrayBuffer) {
+        try {
+          const pdf = await pdfjs.getDocument(new Uint8Array(arrayBuffer)).promise;
+          let fullText = '';
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            fullText += textContent.items.map(item => ('str' in item ? item.str : '')).join(' ') + '\n';
+          }
+          await onParse(fullText);
+        } catch (error) {
+          console.error('Failed to parse PDF:', error);
+          // You might want to show a toast notification to the user here
+        }
+      }
+    };
+    reader.readAsArrayBuffer(file);
+    // Reset file input
+    event.target.value = '';
   };
 
   const hexToHsl = (hex: string): string => {
@@ -250,6 +284,19 @@ export function ControlPanel({
           </AccordionTrigger>
           <AccordionContent className="pt-2">
             <div className="space-y-4">
+              <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".pdf" className="hidden" />
+              <Button onClick={() => fileInputRef.current?.click()} disabled={loading === 'parse'} className="w-full">
+                 {loading === 'parse' ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Upload className="mr-2 h-4 w-4" />
+                  )}
+                  Import from PDF
+              </Button>
+              <div className="relative my-2">
+                <Separator />
+                <span className="absolute left-1/2 -translate-x-1/2 -top-2.5 bg-background px-2 text-sm text-muted-foreground">OR</span>
+              </div>
               <Label>Paste from Existing Resume</Label>
               <Textarea
                 placeholder="Paste your resume text..."
