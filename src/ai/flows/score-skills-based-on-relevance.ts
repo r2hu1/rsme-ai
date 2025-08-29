@@ -3,32 +3,11 @@
  * @fileOverview A skill scoring AI agent.
  *
  * - scoreSkills - A function that handles the skill scoring process.
- * - ScoreSkillsInput - The input type for the scoreSkills function.
- * - ScoreSkillsOutput - The return type for the scoreSkills function.
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { ScoreSkillsInput, ScoreSkillsInputSchema, ScoreSkillsOutput, ScoreSkillsOutputSchema } from '@/lib/types';
 
-const ScoreSkillsInputSchema = z.object({
-  skills: z
-    .string()
-    .describe('A list of skills to be scored, separated by commas.'),
-  jobDescription: z.string().describe('The description of the job market.'),
-});
-export type ScoreSkillsInput = z.infer<typeof ScoreSkillsInputSchema>;
-
-const ScoreSkillsOutputSchema = z.object({
-  scores: z
-    .array(
-      z.object({
-        skill: z.string(),
-        score: z.number().min(0).max(100),
-      })
-    )
-    .describe('A list of skills and their relevance scores (0-100).'),
-});
-export type ScoreSkillsOutput = z.infer<typeof ScoreSkillsOutputSchema>;
 
 export async function scoreSkills(input: ScoreSkillsInput): Promise<ScoreSkillsOutput> {
   return scoreSkillsFlow(input);

@@ -4,26 +4,10 @@
  * @fileOverview This file defines a Genkit flow for evaluating resume content.
  *
  * - evaluateResumeContent - Evaluates resume content for clarity, grammar, and overall effectiveness.
- * - EvaluateResumeContentInput - The input type for the evaluateResumeContent function.
- * - EvaluateResumeContentOutput - The return type for the evaluateResumeContent function.
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
-
-const EvaluateResumeContentInputSchema = z.object({
-  resumeContent: z.string().describe('The content of the resume to evaluate.'),
-});
-export type EvaluateResumeContentInput = z.infer<typeof EvaluateResumeContentInputSchema>;
-
-const EvaluateResumeContentOutputSchema = z.object({
-  clarityScore: z.number().describe('A score indicating the clarity of the resume content (0-100).'),
-  grammarScore: z.number().describe('A score indicating the quality of the grammar in the resume (0-100).'),
-  atsScore: z.number().describe('An estimated Applicant Tracking System (ATS) compatibility score (0-100).'),
-  effectivenessFeedback: z.string().describe('General feedback on the overall effectiveness of the resume content.'),
-  suggestedFixes: z.array(z.string()).describe('A list of specific, actionable suggestions for improvement.'),
-});
-export type EvaluateResumeContentOutput = z.infer<typeof EvaluateResumeContentOutputSchema>;
+import { EvaluateResumeContentInput, EvaluateResumeContentInputSchema, EvaluateResumeContentOutput, EvaluateResumeContentOutputSchema } from '@/lib/types';
 
 export async function evaluateResumeContent(input: EvaluateResumeContentInput): Promise<EvaluateResumeContentOutput> {
   return evaluateResumeContentFlow(input);

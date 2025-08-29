@@ -14,17 +14,18 @@ import {
   Palette,
   Printer,
   Sparkles,
+  Check,
 } from 'lucide-react';
 
 import { parseExistingResume } from '@/ai/flows/parse-existing-resume';
 import { scoreSkills } from '@/ai/flows/score-skills-based-on-relevance';
 import { evaluateResumeContent } from '@/ai/flows/evaluate-resume-content';
+import { applySuggestedFixes } from '@/ai/flows/apply-suggested-fixes';
 
 import type {
   ResumeData,
   SkillScore,
   ContentEvaluation,
-  SectionType,
 } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ResumePreview } from '@/components/resume-preview';
@@ -38,6 +39,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
@@ -241,6 +243,44 @@ export default function Home() {
     }
   };
 
+  const handleApplyFixes = async () => {
+    if (!contentEvaluation) return;
+
+    setLoading('apply-fixes');
+    try {
+      const updatedResume = await applySuggestedFixes({
+        resumeContent: JSON.stringify(resumeData),
+        suggestedFixes: contentEvaluation.suggestedFixes,
+      });
+
+      setResumeData(produce(draft => {
+        Object.assign(draft, updatedResume);
+        // Ensure IDs are present after applying fixes
+        if (draft.experience) draft.experience.forEach(item => { if (!item.id) item.id = crypto.randomUUID(); });
+        if (draft.education) draft.education.forEach(item => { if (!item.id) item.id = crypto.randomUUID(); });
+        if (draft.projects) draft.projects.forEach(item => { if (!item.id) item.id = crypto.randomUUID(); });
+      }));
+      
+      // Mark content as analyzed to prevent re-running immediately
+      setAnalyzedResumeContent(JSON.stringify(updatedResume));
+      // Close the dialog and show success
+      setIsAnalysisDialogOpen(false);
+      toast({
+        title: 'Fixes Applied',
+        description: 'The AI suggestions have been applied to your resume.',
+      });
+    } catch (error) {
+       console.error(error);
+      toast({
+        variant: 'destructive',
+        title: 'Failed to Apply Fixes',
+        description: 'Could not apply the suggested fixes. Please try again.',
+      });
+    } finally {
+      setLoading(null);
+    }
+  };
+
   return (
     <div className="flex h-screen w-full flex-col bg-background">
       <header className="flex h-16 items-center justify-between border-b px-4 lg:px-6 no-print">
@@ -335,6 +375,17 @@ export default function Home() {
               </div>
             </div>
           )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setIsAnalysisDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleApplyFixes} disabled={loading === 'apply-fixes'}>
+              {loading === 'apply-fixes' ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Check className="mr-2 h-4 w-4" />
+              )}
+              Apply Fixes
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
