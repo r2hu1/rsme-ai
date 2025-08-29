@@ -93,9 +93,6 @@ export function ControlPanel({
   const form = useForm<ResumeData>({
     resolver: zodResolver(resumeSchema),
     values: resumeData,
-    resetOptions: {
-      keepDirtyValues: true,
-    },
     mode: 'onBlur',
   });
 
@@ -123,14 +120,10 @@ export function ControlPanel({
     name: "projects",
   });
 
-  React.useEffect(() => {
-    const subscription = form.watch((value) => {
-      onResumeUpdate(value as ResumeData);
-    });
-    return () => subscription.unsubscribe();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.watch, onResumeUpdate]);
-
+  const handleBlur = () => {
+    const values = form.getValues();
+    onResumeUpdate(values);
+  };
 
   return (
     <Accordion type="multiple" defaultValue={['import', 'content']} className="w-full">
@@ -171,7 +164,7 @@ export function ControlPanel({
         </AccordionTrigger>
         <AccordionContent className="pt-2">
           <Form {...form}>
-            <form className="space-y-6">
+            <form onBlur={handleBlur} className="space-y-6">
               <Card>
                 <CardHeader><CardTitle>Personal Details</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
