@@ -1,28 +1,63 @@
 'use client';
 
 import type { ResumeData } from '@/lib/types';
-import { Mail, Phone, MapPin, User, Briefcase, GraduationCap, Wrench, Sparkles, FolderGit2, Link } from 'lucide-react';
+import { Mail, Phone, User, Briefcase, GraduationCap, Wrench, Sparkles, FolderGit2, Link } from 'lucide-react';
 
-export function ResumePreview({ resume }: { resume: ResumeData }) {
+const EditableField = ({ value, onSave, multiline = false }: { value: string; onSave: (newValue: string) => void; multiline?: boolean }) => {
+  const handleBlur = (e: React.FocusEvent<HTMLDivElement>) => {
+    onSave(e.currentTarget.innerText);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter' && !multiline) {
+      e.preventDefault();
+      e.currentTarget.blur();
+    }
+  };
+
+  return (
+    <div
+      contentEditable
+      suppressContentEditableWarning
+      onBlur={handleBlur}
+      onKeyDown={handleKeyDown}
+      dangerouslySetInnerHTML={{ __html: value }}
+      className="outline-none focus:bg-primary/10 focus:ring-1 focus:ring-primary rounded-sm px-1 -mx-1"
+    />
+  );
+};
+
+export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpdate: (newData: ResumeData) => void }) {
   const { name, email, phone, summary, experience, education, skills, projects } = resume;
+
+  const handleUpdate = (path: string, value: any) => {
+    const keys = path.split('.');
+    const newResumeData = JSON.parse(JSON.stringify(resume));
+    let current = newResumeData;
+    for (let i = 0; i < keys.length - 1; i++) {
+      current = current[keys[i]];
+    }
+    current[keys[keys.length - 1]] = value;
+    onUpdate(newResumeData);
+  };
 
   return (
     <div id="resume-preview" className="w-full h-full bg-card rounded-lg shadow-lg overflow-y-auto p-8 lg:p-12 text-card-foreground">
       <div className="flex flex-col gap-8">
         {/* Header */}
         <header className="text-center border-b pb-6">
-          {name && <h1 className="text-4xl font-bold font-headline tracking-tight">{name}</h1>}
+          {name && <h1 className="text-4xl font-bold font-headline tracking-tight"><EditableField value={name} onSave={(v) => handleUpdate('name', v)} /></h1>}
           <div className="flex justify-center items-center gap-6 mt-3 text-sm text-muted-foreground">
             {email && (
-              <a href={`mailto:${email}`} className="flex items-center gap-2 hover:text-primary transition-colors">
+              <div className="flex items-center gap-2 hover:text-primary transition-colors">
                 <Mail className="h-4 w-4" />
-                <span>{email}</span>
-              </a>
+                <EditableField value={email} onSave={(v) => handleUpdate('email', v)} />
+              </div>
             )}
             {phone && (
               <div className="flex items-center gap-2">
                 <Phone className="h-4 w-4" />
-                <span>{phone}</span>
+                <EditableField value={phone} onSave={(v) => handleUpdate('phone', v)} />
               </div>
             )}
           </div>
@@ -37,7 +72,7 @@ export function ResumePreview({ resume }: { resume: ResumeData }) {
                 <User className="h-5 w-5 text-primary" />
                 Professional Summary
               </h2>
-              <p className="text-sm leading-relaxed">{summary}</p>
+              <div className="text-sm leading-relaxed"><EditableField value={summary} onSave={(v) => handleUpdate('summary', v)} multiline /></div>
             </section>
           )}
 
@@ -52,11 +87,11 @@ export function ResumePreview({ resume }: { resume: ResumeData }) {
                 {experience.map((exp, index) => (
                   <div key={index} className="space-y-1">
                     <div className="flex justify-between items-baseline">
-                      <h3 className="font-semibold">{exp.title}</h3>
-                      <p className="text-xs text-muted-foreground">{exp.dates}</p>
+                      <h3 className="font-semibold"><EditableField value={exp.title || ''} onSave={(v) => handleUpdate(`experience.${index}.title`, v)} /></h3>
+                      <p className="text-xs text-muted-foreground"><EditableField value={exp.dates || ''} onSave={(v) => handleUpdate(`experience.${index}.dates`, v)} /></p>
                     </div>
-                    <p className="text-sm font-medium text-primary">{exp.company}</p>
-                    <p className="text-sm text-muted-foreground pt-1">{exp.description}</p>
+                    <p className="text-sm font-medium text-primary"><EditableField value={exp.company || ''} onSave={(v) => handleUpdate(`experience.${index}.company`, v)} /></p>
+                    <p className="text-sm text-muted-foreground pt-1"><EditableField value={exp.description || ''} onSave={(v) => handleUpdate(`experience.${index}.description`, v)} multiline /></p>
                   </div>
                 ))}
               </div>
@@ -74,16 +109,16 @@ export function ResumePreview({ resume }: { resume: ResumeData }) {
                 {projects.map((project, index) => (
                   <div key={index} className="space-y-1 break-inside-avoid">
                     <div className="flex justify-between items-baseline">
-                      <h3 className="font-semibold">{project.name}</h3>
-                      <p className="text-xs text-muted-foreground">{project.dates}</p>
+                      <h3 className="font-semibold"><EditableField value={project.name || ''} onSave={(v) => handleUpdate(`projects.${index}.name`, v)} /></h3>
+                      <p className="text-xs text-muted-foreground"><EditableField value={project.dates || ''} onSave={(v) => handleUpdate(`projects.${index}.dates`, v)} /></p>
                     </div>
                     {project.url && (
-                        <a href={project.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-primary hover:underline">
+                        <div className="flex items-center gap-2 text-sm text-primary hover:underline">
                             <Link className="h-3 w-3" />
-                            {project.url}
-                        </a>
+                            <EditableField value={project.url} onSave={(v) => handleUpdate(`projects.${index}.url`, v)} />
+                        </div>
                     )}
-                    <p className="text-sm text-muted-foreground pt-1">{project.description}</p>
+                    <p className="text-sm text-muted-foreground pt-1"><EditableField value={project.description || ''} onSave={(v) => handleUpdate(`projects.${index}.description`, v)} multiline /></p>
                   </div>
                 ))}
               </div>
@@ -101,10 +136,10 @@ export function ResumePreview({ resume }: { resume: ResumeData }) {
                 {education.map((edu, index) => (
                   <div key={index}>
                     <div className="flex justify-between items-baseline">
-                      <h3 className="font-semibold">{edu.institution}</h3>
-                      <p className="text-xs text-muted-foreground">{edu.dates}</p>
+                      <h3 className="font-semibold"><EditableField value={edu.institution || ''} onSave={(v) => handleUpdate(`education.${index}.institution`, v)} /></h3>
+                      <p className="text-xs text-muted-foreground"><EditableField value={edu.dates || ''} onSave={(v) => handleUpdate(`education.${index}.dates`, v)} /></p>
                     </div>
-                    <p className="text-sm text-muted-foreground">{edu.degree}</p>
+                    <p className="text-sm text-muted-foreground"><EditableField value={edu.degree || ''} onSave={(v) => handleUpdate(`education.${index}.degree`, v)} /></p>
                   </div>
                 ))}
               </div>
@@ -121,7 +156,7 @@ export function ResumePreview({ resume }: { resume: ResumeData }) {
               <div className="flex flex-wrap gap-2">
                 {skills.map((skill, index) => (
                   <div key={index} className="bg-secondary text-secondary-foreground rounded-full px-3 py-1 text-sm">
-                    {skill}
+                    <EditableField value={skill} onSave={(v) => handleUpdate(`skills.${index}`, v)} />
                   </div>
                 ))}
               </div>

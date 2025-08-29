@@ -189,7 +189,7 @@ export default function Home() {
         </aside>
 
         <section className="flex-1 overflow-y-auto bg-muted/30 p-4 lg:p-8">
-          <ResumePreview resume={resumeData} />
+          <ResumePreview resume={resumeData} onUpdate={setResumeData} />
         </section>
       </main>
     </div>
