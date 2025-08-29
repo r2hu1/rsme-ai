@@ -120,21 +120,6 @@ export default function Home() {
   const [fixesApplied, setFixesApplied] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    // This function converts HSL string to just the numbers for the CSS variables
-    const setCssVar = (name: string, value: string) => {
-      const hslValues = value.match(/(\d+(\.\d+)?\s*%?\s*){3}/)?.[0];
-      if (hslValues) {
-        document.documentElement.style.setProperty(name, hslValues);
-      }
-    };
-    
-    setCssVar('--primary', resumeData.theme.primaryColor);
-    setCssVar('--accent', resumeData.theme.accentColor);
-    setCssVar('--foreground', resumeData.theme.textColor);
-    setCssVar('--muted-foreground', resumeData.theme.mutedTextColor);
-  }, [resumeData.theme]);
-
   const handleResumeUpdate = useCallback((newData: Partial<ResumeData>) => {
     setResumeData(produce(draft => {
       Object.assign(draft, newData);

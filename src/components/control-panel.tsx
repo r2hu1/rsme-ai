@@ -238,7 +238,7 @@ export function ControlPanel({
     s = Math.round(s * 100);
     l = Math.round(l * 100);
     
-    return `hsl(${h} ${s}% ${l}%)`;
+    return `${h} ${s}% ${l}%`;
   }
   
   const hslToHex = (hsl: string): string => {
@@ -284,53 +284,63 @@ export function ControlPanel({
           </AccordionTrigger>
           <AccordionContent className="pt-2">
             <div className="space-y-4">
-              <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".pdf" className="hidden" />
-              <Button onClick={() => fileInputRef.current?.click()} disabled={loading === 'parse'} className="w-full">
-                 {loading === 'parse' ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <Upload className="mr-2 h-4 w-4" />
-                  )}
-                  Import from PDF
-              </Button>
-              <div className="relative my-2">
+              <Card>
+                <CardContent className="p-4 space-y-3">
+                   <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".pdf" className="hidden" />
+                   <Button onClick={() => fileInputRef.current?.click()} disabled={loading === 'parse'} className="w-full">
+                     {loading === 'parse' ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Upload className="mr-2 h-4 w-4" />
+                      )}
+                      Import from PDF
+                   </Button>
+                  <div className="relative">
+                    <Separator />
+                    <span className="absolute left-1/2 -translate-x-1/2 -top-2.5 bg-card px-2 text-xs text-muted-foreground">OR</span>
+                  </div>
+                  <Label>Paste from Existing Resume</Label>
+                  <Textarea
+                    placeholder="Paste your resume text..."
+                    rows={6}
+                    value={importText}
+                    onChange={(e) => setImportText(e.target.value)}
+                  />
+                  <Button onClick={() => onParse(importText)} disabled={loading === 'parse' || !importText} className="w-full">
+                    {loading === 'parse' ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Wand2 className="mr-2 h-4 w-4" />
+                    )}
+                    Parse with AI
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <div className="relative">
                 <Separator />
                 <span className="absolute left-1/2 -translate-x-1/2 -top-2.5 bg-background px-2 text-sm text-muted-foreground">OR</span>
               </div>
-              <Label>Paste from Existing Resume</Label>
-              <Textarea
-                placeholder="Paste your resume text..."
-                rows={8}
-                value={importText}
-                onChange={(e) => setImportText(e.target.value)}
-              />
-              <Button onClick={() => onParse(importText)} disabled={loading === 'parse' || !importText} className="w-full">
-                {loading === 'parse' ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Wand2 className="mr-2 h-4 w-4" />
-                )}
-                Parse with AI
-              </Button>
-              <div className="relative my-4">
-                <Separator />
-                <span className="absolute left-1/2 -translate-x-1/2 -top-2.5 bg-background px-2 text-sm text-muted-foreground">OR</span>
-              </div>
-               <Label>Generate with a Prompt</Label>
-               <Textarea
-                placeholder="e.g., 'Generate a resume for a senior product manager at a SaaS company...'"
-                rows={5}
-                value={generatePrompt}
-                onChange={(e) => setGeneratePrompt(e.target.value)}
-              />
-               <Button onClick={() => onGenerate(generatePrompt)} disabled={loading === 'generate' || !generatePrompt} className="w-full">
-                {loading === 'generate' ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Sparkles className="mr-2 h-4 w-4" />
-                )}
-                Generate with AI
-              </Button>
+              
+              <Card>
+                <CardContent className="p-4 space-y-3">
+                   <Label>Generate with a Prompt</Label>
+                   <Textarea
+                    placeholder="e.g., 'Generate a resume for a senior product manager at a SaaS company...'"
+                    rows={5}
+                    value={generatePrompt}
+                    onChange={(e) => setGeneratePrompt(e.target.value)}
+                  />
+                   <Button onClick={() => onGenerate(generatePrompt)} disabled={loading === 'generate' || !generatePrompt} className="w-full">
+                    {loading === 'generate' ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="mr-2 h-4 w-4" />
+                    )}
+                    Generate with AI
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
           </AccordionContent>
         </AccordionItem>
@@ -366,7 +376,7 @@ export function ControlPanel({
               </CardContent>
             </Card>
             <Card>
-              <CardHeader><CardTitle className="flex items-center gap-2"><Palette/> Theme</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="flex items-center gap-2"><Palette/> Theme (PDF &amp; Print)</CardTitle></CardHeader>
               <CardContent className="grid gap-4">
                 <FormField
                   control={form.control}
