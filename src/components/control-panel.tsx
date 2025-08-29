@@ -363,11 +363,7 @@ export function ControlPanel({
 
 	return (
 		<Form {...form}>
-			<Accordion
-				type="multiple"
-				defaultValue={["import", "content", "customize"]}
-				className="w-full"
-			>
+			<Accordion type="multiple" defaultValue={"import"} className="w-full">
 				<AccordionItem value="import">
 					<AccordionTrigger className="text-lg font-semibold">
 						<div className="flex items-center gap-3">
