@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useRef, useMemo } from 'react';
@@ -120,7 +121,7 @@ const DraggableSection = ({ section, resume, onUpdate, children }: { section: Se
   return (
      <section ref={setNodeRef} style={style} className="relative group/section">
         <div
-          className="flex items-center gap-3 text-lg font-semibold font-headline border-resume-primary pb-2 mb-4"
+          className="flex items-center gap-3 text-lg font-semibold font-headline pb-2 mb-4"
           style={{ borderBottomWidth: resume.theme.borderWidth, borderColor: 'var(--resume-primary)' }}
         >
           <EditableField value={section.title} onSave={handleTitleUpdate} as="h2" className="flex-grow" />
@@ -234,7 +235,7 @@ export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpda
                             <h3 className="font-semibold"><EditableField value={exp.title || ''} onSave={(v) => handleItemUpdate(exp.id!, 'experience', 'title', v)} as="div" /></h3>
                             <div className="text-xs text-resume-muted-text"><EditableField value={exp.dates || ''} onSave={(v) => handleItemUpdate(exp.id!, 'experience', 'dates', v)} /></div>
                           </div>
-                          <div className="text-sm font-medium text-resume-primary"><EditableField value={exp.company || ''} onSave={(v) => handleItemUpdate(exp.id!, 'experience', 'company', v)} /></div>
+                          <div className="text-sm font-medium" style={{color: 'var(--resume-primary)'}}><EditableField value={exp.company || ''} onSave={(v) => handleItemUpdate(exp.id!, 'experience', 'company', v)} /></div>
                           <div className="text-sm text-resume-muted-text pt-1"><EditableField value={exp.description || ''} onSave={(v) => handleItemUpdate(exp.id!, 'experience', 'description', v)} multiline /></div>
                         </div>
                       </SortableItem>
@@ -258,7 +259,7 @@ export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpda
                             <div className="text-xs text-resume-muted-text"><EditableField value={project.dates || ''} onSave={(v) => handleItemUpdate(project.id!, 'projects', 'dates', v)} /></div>
                           </div>
                           {project.url && (
-                              <div className="flex items-center gap-2 text-sm text-resume-primary hover:underline">
+                              <div className="flex items-center gap-2 text-sm hover:underline" style={{color: 'var(--resume-primary)'}}>
                                   <Link className="h-3 w-3" />
                                   <EditableField value={project.url} onSave={(v) => handleItemUpdate(project.id!, 'projects', 'url', v)} />
                               </div>
@@ -327,8 +328,9 @@ export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpda
         style={{
             '--resume-primary': theme.primaryColor,
             '--resume-accent': theme.accentColor,
-            '--resume-text': theme.textColor,
-            '--resume-muted-text': theme.mutedTextColor,
+            '--resume-text': 'hsl(210 10% 23%)', // Hardcoded as per globals.css
+            '--resume-muted-text': 'hsl(210 20% 45%)', // Hardcoded as per globals.css
+            '--resume-primary-foreground': 'hsl(210 20% 98%)', // Hardcoded for accent bg
         } as React.CSSProperties}
     >
       <div className="flex flex-col gap-8">

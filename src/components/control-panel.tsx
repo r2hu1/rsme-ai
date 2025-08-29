@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -98,8 +99,6 @@ const resumeSchema = z.object({
   theme: z.object({
     primaryColor: z.string(),
     accentColor: z.string(),
-    textColor: z.string(),
-    mutedTextColor: z.string(),
     borderWidth: z.number(),
   }),
 });
@@ -238,7 +237,7 @@ export function ControlPanel({
     s = Math.round(s * 100);
     l = Math.round(l * 100);
     
-    return `${h} ${s}% ${l}%`;
+    return `hsl(${h} ${s}% ${l}%)`;
   }
   
   const hslToHex = (hsl: string): string => {
@@ -402,42 +401,6 @@ export function ControlPanel({
                   render={({ field }) => (
                     <FormItem className="grid grid-cols-3 items-center gap-4">
                       <FormLabel>Accent</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="color"
-                          value={hslToHex(field.value)}
-                          onBlur={() => handleBlur('theme')}
-                          onChange={(e) => field.onChange(hexToHsl(e.target.value))}
-                          className="col-span-2 h-8 p-1"
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                  control={form.control}
-                  name="theme.textColor"
-                  render={({ field }) => (
-                    <FormItem className="grid grid-cols-3 items-center gap-4">
-                      <FormLabel>Text</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="color"
-                          value={hslToHex(field.value)}
-                          onBlur={() => handleBlur('theme')}
-                          onChange={(e) => field.onChange(hexToHsl(e.target.value))}
-                          className="col-span-2 h-8 p-1"
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                  control={form.control}
-                  name="theme.mutedTextColor"
-                  render={({ field }) => (
-                    <FormItem className="grid grid-cols-3 items-center gap-4">
-                      <FormLabel>Muted Text</FormLabel>
                       <FormControl>
                         <Input
                           type="color"

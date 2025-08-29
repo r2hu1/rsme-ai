@@ -126,8 +126,6 @@ export interface ResumeData extends Omit<ParseExistingResumeOutput, 'experience'
   theme: {
     primaryColor: string;
     accentColor: string;
-    textColor: string;
-    mutedTextColor: string;
     borderWidth: number;
   };
 }
