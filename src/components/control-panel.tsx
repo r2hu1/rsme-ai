@@ -15,6 +15,7 @@ import {
   Star,
   Settings,
   Palette,
+  Sparkles,
 } from 'lucide-react';
 import { produce } from 'immer';
 
@@ -44,11 +45,13 @@ import type {
 import { Progress } from './ui/progress';
 import { Switch } from './ui/switch';
 import { Slider } from './ui/slider';
+import { Separator } from './ui/separator';
 
 interface ControlPanelProps {
   resumeData: ResumeData;
   onResumeUpdate: (data: Partial<ResumeData>) => void;
   onParse: (text: string) => Promise<void>;
+  onGenerate: (prompt: string) => Promise<void>;
   onScoreSkills: (jobDescription: string) => Promise<void>;
   loading: string | null;
   skillScores: SkillScore[] | null;
@@ -101,11 +104,13 @@ export function ControlPanel({
   resumeData,
   onResumeUpdate,
   onParse,
+  onGenerate,
   onScoreSkills,
   loading,
   skillScores,
 }: ControlPanelProps) {
   const [importText, setImportText] = useState('');
+  const [generatePrompt, setGeneratePrompt] = useState('');
   const [jobDescription, setJobDescription] = useState('');
 
   const form = useForm<ResumeData>({
@@ -240,17 +245,15 @@ export function ControlPanel({
         <AccordionItem value="import">
           <AccordionTrigger className="text-lg font-semibold">
             <div className="flex items-center gap-3">
-              <FileText className="h-5 w-5" /> Import Resume
+              <FileText className="h-5 w-5" /> Import or Generate
             </div>
           </AccordionTrigger>
           <AccordionContent className="pt-2">
             <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Paste your existing resume here to get started. Our AI will parse it and fill in the fields for you.
-              </p>
+              <Label>Paste from Existing Resume</Label>
               <Textarea
                 placeholder="Paste your resume text..."
-                rows={10}
+                rows={8}
                 value={importText}
                 onChange={(e) => setImportText(e.target.value)}
               />
@@ -261,6 +264,25 @@ export function ControlPanel({
                   <Wand2 className="mr-2 h-4 w-4" />
                 )}
                 Parse with AI
+              </Button>
+              <div className="relative my-4">
+                <Separator />
+                <span className="absolute left-1/2 -translate-x-1/2 -top-2.5 bg-background px-2 text-sm text-muted-foreground">OR</span>
+              </div>
+               <Label>Generate with a Prompt</Label>
+               <Textarea
+                placeholder="e.g., 'Generate a resume for a senior product manager at a SaaS company...'"
+                rows={5}
+                value={generatePrompt}
+                onChange={(e) => setGeneratePrompt(e.target.value)}
+              />
+               <Button onClick={() => onGenerate(generatePrompt)} disabled={loading === 'generate' || !generatePrompt} className="w-full">
+                {loading === 'generate' ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Sparkles className="mr-2 h-4 w-4" />
+                )}
+                Generate with AI
               </Button>
             </div>
           </AccordionContent>

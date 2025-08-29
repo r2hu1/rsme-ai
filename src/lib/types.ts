@@ -35,7 +35,7 @@ export type ParseExistingResumeInput = z.infer<typeof ParseExistingResumeInputSc
 
 export const ParseExistingResumeOutputSchema = z.object({
   name: z.string().optional().describe('The name of the resume owner.'),
-  email: z.string().email().optional().describe('The email address of the resume owner.'),
+  email: z.string().email().optional().or(z.literal('')).describe('The email address of the resume owner.'),
   phone: z.string().optional().describe('The phone number of the resume owner.'),
   summary: z.string().optional().describe('A brief summary or objective statement.'),
   experience: z.array(ExperienceSchema).optional().describe('A list of work experiences.'),
@@ -59,7 +59,7 @@ export const EvaluateResumeContentOutputSchema = z.object({
   effectivenessFeedback: z.string().describe('General feedback on the overall effectiveness of the resume content.'),
   suggestedFixes: z.array(z.string()).describe('A list of specific, actionable suggestions for improvement.'),
 });
-export type EvaluateResumeContentOutput = z.infer<typeof EvaluateResumeContentOutputSchema>;
+export type ContentEvaluation = z.infer<typeof EvaluateResumeContentOutputSchema>;
 
 
 // ApplySuggestedFixes Schemas and Types
@@ -80,9 +80,7 @@ export const GenerateResumeInputSchema = z.object({
 });
 export type GenerateResumeInput = z.infer<typeof GenerateResumeInputSchema>;
 
-export const GenerateResumeOutputSchema = z.object({
-  resumeContent: z.string().describe('The generated resume content in a suitable format (e.g., text, markdown, or JSON).'),
-});
+export const GenerateResumeOutputSchema = ParseExistingResumeOutputSchema;
 export type GenerateResumeOutput = z.infer<typeof GenerateResumeOutputSchema>;
 
 
@@ -105,7 +103,7 @@ export const ScoreSkillsOutputSchema = z.object({
     )
     .describe('A list of skills and their relevance scores (0-100).'),
 });
-export type ScoreSkillsOutput = z.infer<typeof ScoreSkillsOutputSchema>;
+export type SkillScore = NonNullable<z.infer<typeof ScoreSkillsOutputSchema>['scores']>[0];
 
 
 // UI-facing Types
@@ -136,6 +134,3 @@ export interface ResumeData extends Omit<ParseExistingResumeOutput, 'experience'
 export type Experience = z.infer<typeof ExperienceSchema>;
 export type Education = z.infer<typeof EducationSchema>;
 export type Project = z.infer<typeof ProjectSchema>;
-
-export type SkillScore = NonNullable<z.infer<typeof ScoreSkillsOutputSchema>['scores']>[0];
-export type ContentEvaluation = z.infer<typeof EvaluateResumeContentOutputSchema>;

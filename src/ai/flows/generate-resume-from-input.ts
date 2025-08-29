@@ -17,7 +17,10 @@ const prompt = ai.definePrompt({
   name: 'generateResumeFromInputPrompt',
   input: {schema: GenerateResumeInputSchema},
   output: {schema: GenerateResumeOutputSchema},
-  prompt: `You are an expert resume writer. Generate a resume based on the following prompt:\n\n{{{prompt}}}`,
+  prompt: `You are an expert resume writer. Generate a complete resume in JSON format based on the following prompt. For each item in experience, education, and projects arrays, generate a unique id.
+
+Prompt:
+{{{prompt}}}`,
 });
 
 const generateResumeFromInputFlow = ai.defineFlow(
@@ -28,6 +31,25 @@ const generateResumeFromInputFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
-    return output!;
+    const resume = output!;
+
+    // Ensure IDs are present
+    if (resume.experience) {
+        resume.experience.forEach(item => {
+            if (!item.id) item.id = crypto.randomUUID();
+        });
+    }
+    if (resume.education) {
+        resume.education.forEach(item => {
+            if (!item.id) item.id = crypto.randomUUID();
+        });
+    }
+     if (resume.projects) {
+        resume.projects.forEach(item => {
+            if (!item.id) item.id = crypto.randomUUID();
+        });
+    }
+    
+    return resume;
   }
 );
