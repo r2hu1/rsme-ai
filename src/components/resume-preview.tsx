@@ -324,7 +324,7 @@ export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpda
     <div id="resume-preview" className="w-full h-full bg-card rounded-lg shadow-lg overflow-y-auto p-8 lg:p-12 text-card-foreground">
       <div className="flex flex-col gap-8">
         {/* Header */}
-        <header className="text-center border-primary pb-6" style={{ borderBottomWidth: theme.borderWidth }}>
+        <header className="text-center pb-6">
           {name != null && <h1 className="text-4xl font-bold font-headline tracking-tight"><EditableField value={name} onSave={(v) => handleUpdate('name', v)} as="h1" /></h1>}
           <div className="flex justify-center items-center gap-6 mt-3 text-sm text-muted-foreground">
             {email != null && (
