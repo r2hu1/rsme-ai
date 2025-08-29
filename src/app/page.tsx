@@ -111,6 +111,7 @@ export default function Home() {
   const [skillScores, setSkillScores] = useState<SkillScore[] | null>(null);
   const [contentEvaluation, setContentEvaluation] =
     useState<ContentEvaluation | null>(null);
+  const [analyzedResumeContent, setAnalyzedResumeContent] = useState<string | null>(null);
   const [isAnalysisDialogOpen, setIsAnalysisDialogOpen] = useState(false);
   const { toast } = useToast();
 
@@ -211,11 +212,18 @@ export default function Home() {
       });
       return;
     }
+
+    if (contentEvaluation && resumeContent === analyzedResumeContent) {
+      setIsAnalysisDialogOpen(true);
+      return;
+    }
+
     setLoading('analyze');
     setContentEvaluation(null);
     try {
       const evaluation = await evaluateResumeContent({ resumeContent });
       setContentEvaluation(evaluation);
+      setAnalyzedResumeContent(resumeContent);
       setIsAnalysisDialogOpen(true);
       toast({
         title: 'Analysis Complete',
