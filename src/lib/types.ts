@@ -25,9 +25,10 @@ export interface ResumeData extends Omit<ParseExistingResumeOutput, 'experience'
   };
 }
 
-export type Experience = NonNullable<ParseExistingResumeOutput['experience']>[0];
-export type Education = NonNullable<ParseExistingResumeOutput['education']>[0];
-export type Project = NonNullable<ParseExistingResumeOutput['projects']>[0];
+export type Experience = NonNullable<ParseExistingResumeOutput['experience']>[0] & { id: string };
+export type Education = NonNullable<ParseExistingResumeOutput['education']>[0] & { id: string };
+export type Project = NonNullable<ParseExistingResumeOutput['projects']>[0] & { id: string };
+
 
 export type SkillScore = NonNullable<ScoreSkillsOutput['scores']>[0];
 

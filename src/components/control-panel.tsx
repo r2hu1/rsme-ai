@@ -42,6 +42,7 @@ import type {
   ContentEvaluation,
 } from '@/lib/types';
 import { Progress } from './ui/progress';
+import { Switch } from './ui/switch';
 
 interface ControlPanelProps {
   resumeData: ResumeData;
@@ -118,6 +119,10 @@ export function ControlPanel({
   React.useEffect(() => {
     form.reset(resumeData);
   }, [resumeData, form]);
+  
+  const triggerUpdate = (data: Partial<ResumeData>) => {
+    onResumeUpdate(data);
+  };
 
   const { fields: expFields, append: appendExp, remove: removeExp } = useFieldArray({
     control: form.control,
@@ -128,7 +133,7 @@ export function ControlPanel({
     control: form.control,
     name: "education",
   });
-  
+
   const { fields: skillFields, append: appendSkill, remove: removeSkill } = useFieldArray({
     control: form.control,
     name: "skills",
@@ -138,20 +143,45 @@ export function ControlPanel({
     control: form.control,
     name: "projects",
   });
+  
+  const handleItemRemove = (remover: (index: number) => void, index: number, fieldName: keyof ResumeData) => {
+    const currentData = form.getValues(fieldName as any);
+    if (Array.isArray(currentData)) {
+      const updatedData = [...currentData];
+      updatedData.splice(index, 1);
+      triggerUpdate({ [fieldName]: updatedData });
+    }
+  };
+
 
   const handleBlur = () => {
-    form.handleSubmit(d => onResumeUpdate(d))();
+    form.handleSubmit(data => {
+      // Only update if there are actual changes to avoid loops
+      if (JSON.stringify(data) !== JSON.stringify(resumeData)) {
+        triggerUpdate(data);
+      }
+    })();
   };
-  
+
   const addCustomSection = () => {
     const newSection = {
-        id: crypto.randomUUID(),
-        type: 'custom' as const,
-        title: 'New Section',
-        enabled: true,
-        content: 'This is a new custom section. Click to edit!'
+      id: crypto.randomUUID(),
+      type: 'custom' as const,
+      title: 'New Section',
+      enabled: true,
+      content: 'This is a new custom section. Click to edit!'
     };
     onResumeUpdate({ sections: [...resumeData.sections, newSection] });
+  };
+  
+  const handleSectionToggle = (sectionId: string, enabled: boolean) => {
+    const updatedSections = produce(resumeData.sections, draft => {
+      const section = draft.find(s => s.id === sectionId);
+      if (section) {
+        section.enabled = enabled;
+      }
+    });
+    onResumeUpdate({ sections: updatedSections });
   };
 
 
@@ -193,50 +223,32 @@ export function ControlPanel({
           </div>
         </AccordionTrigger>
         <AccordionContent className="pt-2">
-           <Card>
-                <CardHeader><CardTitle>Sections</CardTitle></CardHeader>
-                <CardContent className="space-y-2">
-                    <p className="text-sm text-muted-foreground">Toggle sections on or off.</p>
-                    <Form {...form}>
-                        <form onBlur={handleBlur} className="space-y-4">
-                             {resumeData.sections.map((section, index) => (
-                                <FormField
-                                key={section.id}
-                                control={form.control}
-                                name={`sections.${index}.enabled`}
-                                render={({ field }) => (
-                                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                                    <div className="space-y-0.5">
-                                        <FormLabel>{resumeData.sections[index].title}</FormLabel>
-                                    </div>
-                                    <FormControl>
-                                        <Controller
-                                            name={`sections.${index}.enabled`}
-                                            control={form.control}
-                                            render={({ field: { onChange, value } }) => (
-                                                <Input
-                                                type="checkbox"
-                                                className="h-4 w-4"
-                                                checked={value}
-                                                onChange={onChange}
-                                                />
-                                            )}
-                                        />
-                                    </FormControl>
-                                    </FormItem>
-                                )}
-                                />
-                            ))}
-                        </form>
-                    </Form>
-                    <Button onClick={addCustomSection} className="w-full mt-4">
-                        <PlusCircle className="mr-2 h-4 w-4" /> Add Custom Section
-                    </Button>
-                </CardContent>
-            </Card>
+          <Card>
+            <CardHeader><CardTitle>Sections</CardTitle></CardHeader>
+            <CardContent className="space-y-2">
+              <p className="text-sm text-muted-foreground">Toggle sections on or off.</p>
+              
+                <div className="space-y-4">
+                  {resumeData.sections.map((section) => (
+                    <div key={section.id} className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                      <Label htmlFor={`section-toggle-${section.id}`} className="cursor-pointer">{section.title}</Label>
+                      <Switch
+                        id={`section-toggle-${section.id}`}
+                        checked={section.enabled}
+                        onCheckedChange={(checked) => handleSectionToggle(section.id, checked)}
+                      />
+                    </div>
+                  ))}
+                </div>
+      
+              <Button onClick={addCustomSection} className="w-full mt-4">
+                <PlusCircle className="mr-2 h-4 w-4" /> Add Custom Section
+              </Button>
+            </CardContent>
+          </Card>
         </AccordionContent>
       </AccordionItem>
-      
+
       <AccordionItem value="content">
         <AccordionTrigger className="text-lg font-semibold">
           <div className="flex items-center gap-3">
@@ -249,63 +261,30 @@ export function ControlPanel({
               <Card>
                 <CardHeader><CardTitle>Personal Details</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
-                  <FormField control={form.control} name="name" render={({ field }) => ( <FormItem> <FormLabel>Full Name</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem> )} />
-                  <FormField control={form.control} name="email" render={({ field }) => ( <FormItem> <FormLabel>Email</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem> )} />
-                  <FormField control={form.control} name="phone" render={({ field }) => ( <FormItem> <FormLabel>Phone</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem> )} />
+                  <FormField control={form.control} name="name" render={({ field }) => (<FormItem> <FormLabel>Full Name</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem>)} />
+                  <FormField control={form.control} name="email" render={({ field }) => (<FormItem> <FormLabel>Email</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem>)} />
+                  <FormField control={form.control} name="phone" render={({ field }) => (<FormItem> <FormLabel>Phone</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem>)} />
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader><CardTitle>Summary</CardTitle></CardHeader>
                 <CardContent>
-                   <FormField control={form.control} name="summary" render={({ field }) => ( <FormItem> <FormControl><Textarea {...field} rows={5} /></FormControl> </FormItem> )} />
+                  <FormField control={form.control} name="summary" render={({ field }) => (<FormItem> <FormControl><Textarea {...field} rows={5} /></FormControl> </FormItem>)} />
                 </CardContent>
               </Card>
 
               <Card>
-                 <CardHeader><CardTitle className="flex justify-between items-center"><span>Experience</span><Button type="button" size="sm" variant="ghost" onClick={() => appendExp({ id: crypto.randomUUID() })}><PlusCircle className="mr-2 h-4 w-4" />Add</Button></CardTitle></CardHeader>
+                <CardHeader><CardTitle className="flex justify-between items-center"><span>Experience</span><Button type="button" size="sm" variant="ghost" onClick={() => appendExp({ id: crypto.randomUUID() })}><PlusCircle className="mr-2 h-4 w-4" />Add</Button></CardTitle></CardHeader>
                 <CardContent className="space-y-4">
                   {expFields.map((field, index) => (
                     <Card key={field.id} className="p-4 relative">
-                        <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6" onClick={() => removeExp(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                        <div className="space-y-2">
-                            <FormField control={form.control} name={`experience.${index}.title`} render={({ field }) => ( <FormItem> <FormLabel>Title</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem> )} />
-                            <FormField control={form.control} name={`experience.${index}.company`} render={({ field }) => ( <FormItem> <FormLabel>Company</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem> )} />
-                            <FormField control={form.control} name={`experience.${index}.dates`} render={({ field }) => ( <FormItem> <FormLabel>Dates</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem> )} />
-                            <FormField control={form.control} name={`experience.${index}.description`} render={({ field }) => ( <FormItem> <FormLabel>Description</FormLabel> <FormControl><Textarea {...field} /></FormControl> </FormItem> )} />
-                        </div>
-                    </Card>
-                  ))}
-                </CardContent>
-              </Card>
-              
-              <Card>
-                 <CardHeader><CardTitle className="flex justify-between items-center"><span>Education</span><Button type="button" size="sm" variant="ghost" onClick={() => appendEdu({ id: crypto.randomUUID() })}><PlusCircle className="mr-2 h-4 w-4" />Add</Button></CardTitle></CardHeader>
-                 <CardContent className="space-y-4">
-                  {eduFields.map((field, index) => (
-                    <Card key={field.id} className="p-4 relative">
-                        <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6" onClick={() => removeEdu(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                        <div className="space-y-2">
-                           <FormField control={form.control} name={`education.${index}.institution`} render={({ field }) => ( <FormItem> <FormLabel>Institution</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem> )} />
-                           <FormField control={form.control} name={`education.${index}.degree`} render={({ field }) => ( <FormItem> <FormLabel>Degree</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem> )} />
-                           <FormField control={form.control} name={`education.${index}.dates`} render={({ field }) => ( <FormItem> <FormLabel>Dates</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem> )} />
-                        </div>
-                    </Card>
-                  ))}
-                 </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader><CardTitle className="flex justify-between items-center"><span>Projects</span><Button type="button" size="sm" variant="ghost" onClick={() => appendProject({ id: crypto.randomUUID() })}><PlusCircle className="mr-2 h-4 w-4" />Add</Button></CardTitle></CardHeader>
-                <CardContent className="space-y-4">
-                  {projectFields.map((field, index) => (
-                    <Card key={field.id} className="p-4 relative">
-                      <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6" onClick={() => removeProject(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                      <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6" onClick={() => handleItemRemove(removeExp, index, 'experience')}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                       <div className="space-y-2">
-                        <FormField control={form.control} name={`projects.${index}.name`} render={({ field }) => ( <FormItem> <FormLabel>Project Name</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem> )} />
-                        <FormField control={form.control} name={`projects.${index}.dates`} render={({ field }) => ( <FormItem> <FormLabel>Dates</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem> )} />
-                        <FormField control={form.control} name={`projects.${index}.url`} render={({ field }) => ( <FormItem> <FormLabel>URL</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem> )} />
-                        <FormField control={form.control} name={`projects.${index}.description`} render={({ field }) => ( <FormItem> <FormLabel>Description</FormLabel> <FormControl><Textarea {...field} /></FormControl> </FormItem> )} />
+                        <FormField control={form.control} name={`experience.${index}.title`} render={({ field }) => (<FormItem> <FormLabel>Title</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem>)} />
+                        <FormField control={form.control} name={`experience.${index}.company`} render={({ field }) => (<FormItem> <FormLabel>Company</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem>)} />
+                        <FormField control={form.control} name={`experience.${index}.dates`} render={({ field }) => (<FormItem> <FormLabel>Dates</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem>)} />
+                        <FormField control={form.control} name={`experience.${index}.description`} render={({ field }) => (<FormItem> <FormLabel>Description</FormLabel> <FormControl><Textarea {...field} /></FormControl> </FormItem>)} />
                       </div>
                     </Card>
                   ))}
@@ -313,15 +292,53 @@ export function ControlPanel({
               </Card>
 
               <Card>
-                <CardHeader><CardTitle className="flex justify-between items-center"><span>Skills</span><Button type="button" size="sm" variant="ghost" onClick={() => appendSkill("")}><PlusCircle className="mr-2 h-4 w-4" />Add</Button></CardTitle></Header>
+                <CardHeader><CardTitle className="flex justify-between items-center"><span>Education</span><Button type="button" size="sm" variant="ghost" onClick={() => appendEdu({ id: crypto.randomUUID() })}><PlusCircle className="mr-2 h-4 w-4" />Add</Button></CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                  {eduFields.map((field, index) => (
+                    <Card key={field.id} className="p-4 relative">
+                      <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6" onClick={() => handleItemRemove(removeEdu, index, 'education')}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                      <div className="space-y-2">
+                        <FormField control={form.control} name={`education.${index}.institution`} render={({ field }) => (<FormItem> <FormLabel>Institution</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem>)} />
+                        <FormField control={form.control} name={`education.${index}.degree`} render={({ field }) => (<FormItem> <FormLabel>Degree</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem>)} />
+                        <FormField control={form.control} name={`education.${index}.dates`} render={({ field }) => (<FormItem> <FormLabel>Dates</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem>)} />
+                      </div>
+                    </Card>
+                  ))}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader><CardTitle className="flex justify-between items-center"><span>Projects</span><Button type="button" size="sm" variant="ghost" onClick={() => appendProject({ id: crypto.randomUUID() })}><PlusCircle className="mr-2 h-4 w-4" />Add</Button></CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                  {projectFields.map((field, index) => (
+                    <Card key={field.id} className="p-4 relative">
+                      <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6" onClick={() => handleItemRemove(removeProject, index, 'projects')}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                      <div className="space-y-2">
+                        <FormField control={form.control} name={`projects.${index}.name`} render={({ field }) => (<FormItem> <FormLabel>Project Name</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem>)} />
+                        <FormField control={form.control} name={`projects.${index}.dates`} render={({ field }) => (<FormItem> <FormLabel>Dates</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem>)} />
+                        <FormField control={form.control} name={`projects.${index}.url`} render={({ field }) => (<FormItem> <FormLabel>URL</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem>)} />
+                        <FormField control={form.control} name={`projects.${index}.description`} render={({ field }) => (<FormItem> <FormLabel>Description</FormLabel> <FormControl><Textarea {...field} /></FormControl> </FormItem>)} />
+                      </div>
+                    </Card>
+                  ))}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex justify-between items-center">
+                    <span>Skills</span>
+                    <Button type="button" size="sm" variant="ghost" onClick={() => appendSkill("")}><PlusCircle className="mr-2 h-4 w-4" />Add</Button>
+                  </CardTitle>
+                </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-2">
-                  {skillFields.map((field, index) => (
-                     <div key={field.id} className="flex items-center gap-1 bg-secondary rounded-full">
+                    {skillFields.map((field, index) => (
+                      <div key={field.id} className="flex items-center gap-1 bg-secondary rounded-full">
                         <Controller name={`skills.${index}`} control={form.control} render={({ field }) => (<Input {...field} className="h-8 bg-transparent border-none focus-visible:ring-0 w-32" />)} />
-                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6 rounded-full" onClick={() => removeSkill(index)}><Trash2 className="h-3 w-3 text-destructive" /></Button>
-                     </div>
-                  ))}
+                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6 rounded-full" onClick={() => handleItemRemove(removeSkill, index, 'skills')}><Trash2 className="h-3 w-3 text-destructive" /></Button>
+                      </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
@@ -370,7 +387,7 @@ export function ControlPanel({
           </div>
         </AccordionContent>
       </AccordionItem>
-      
+
       <AccordionItem value="analyze">
         <AccordionTrigger className="text-lg font-semibold">
           <div className="flex items-center gap-3">
@@ -379,7 +396,7 @@ export function ControlPanel({
         </AccordionTrigger>
         <AccordionContent className="pt-2">
           <div className="space-y-4">
-             <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Let our AI analyze your resume for clarity, grammar, and overall effectiveness.
             </p>
             <Button onClick={onAnalyzeContent} disabled={loading === 'analyze'} className="w-full">
@@ -397,10 +414,10 @@ export function ControlPanel({
                     </div>
                     <Progress value={contentEvaluation.clarityScore} />
                   </div>
-                   <div>
+                  <div>
                     <div className="flex justify-between mb-1">
                       <Label>Grammar Score</Label>
-                       <span className="text-sm font-medium text-primary">{contentEvaluation.grammarScore}/100</span>
+                      <span className="text-sm font-medium text-primary">{contentEvaluation.grammarScore}/100</span>
                     </div>
                     <Progress value={contentEvaluation.grammarScore} />
                   </div>
