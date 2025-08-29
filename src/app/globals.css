@@ -71,6 +71,9 @@
 }
 
 @media print {
+  body {
+    background-color: #fff;
+  }
   body * {
     visibility: hidden;
   }
@@ -78,19 +81,19 @@
     visibility: visible;
   }
   #resume-preview {
-    position: absolute;
+    position: fixed;
     left: 0;
     top: 0;
     width: 100%;
-    height: auto;
+    height: 100%;
     margin: 0;
-    padding: 0;
+    padding: 2rem;
     border: none;
     box-shadow: none;
-    transform: scale(0.95);
-    transform-origin: top left;
+    transform: scale(1);
+    -webkit-print-color-adjust: exact;
   }
   .no-print {
-    display: none;
+    display: none !important;
   }
 }

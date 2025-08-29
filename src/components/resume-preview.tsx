@@ -70,9 +70,9 @@ export function ResumePreview({ resume }: { resume: ResumeData }) {
                 <FolderGit2 className="h-5 w-5 text-primary" />
                 Projects
               </h2>
-              <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {projects.map((project, index) => (
-                  <div key={index} className="space-y-1">
+                  <div key={index} className="space-y-1 break-inside-avoid">
                     <div className="flex justify-between items-baseline">
                       <h3 className="font-semibold">{project.name}</h3>
                       <p className="text-xs text-muted-foreground">{project.dates}</p>
