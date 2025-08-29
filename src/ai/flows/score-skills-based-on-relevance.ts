@@ -18,7 +18,16 @@ const ScoreSkillsInputSchema = z.object({
 });
 export type ScoreSkillsInput = z.infer<typeof ScoreSkillsInputSchema>;
 
-const ScoreSkillsOutputSchema = z.record(z.string(), z.number().min(0).max(100)).describe('A map of skill to its relevance score (0-100).');
+const ScoreSkillsOutputSchema = z.object({
+  scores: z
+    .array(
+      z.object({
+        skill: z.string(),
+        score: z.number().min(0).max(100),
+      })
+    )
+    .describe('A list of skills and their relevance scores (0-100).'),
+});
 export type ScoreSkillsOutput = z.infer<typeof ScoreSkillsOutputSchema>;
 
 export async function scoreSkills(input: ScoreSkillsInput): Promise<ScoreSkillsOutput> {

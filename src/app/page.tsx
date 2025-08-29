@@ -94,13 +94,11 @@ export default function Home() {
     setLoading('score');
     setSkillScores(null);
     try {
-      const scores = await scoreSkills({
+      const { scores } = await scoreSkills({
         skills: resumeData.skills.join(', '),
         jobDescription,
       });
-      const sortedScores = Object.entries(scores)
-        .map(([skill, score]) => ({ skill, score }))
-        .sort((a, b) => b.score - a.score);
+      const sortedScores = scores.sort((a, b) => b.score - a.score);
       setSkillScores(sortedScores);
       toast({
         title: 'Skills Scored',
