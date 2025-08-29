@@ -3,126 +3,129 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --background: 210 20% 96%;
-    --foreground: 210 10% 23%;
-    --card: 210 20% 100%;
-    --card-foreground: 210 10% 23%;
-    --popover: 210 20% 100%;
-    --popover-foreground: 210 10% 23%;
-    --primary: 210 86% 53%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 210 20% 92%;
-    --secondary-foreground: 210 10% 23%;
-    --muted: 210 20% 92%;
-    --muted-foreground: 210 20% 45%;
-    --accent: 180 55% 46%;
-    --accent-foreground: 210 20% 98%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 210 20% 88%;
-    --input: 210 20% 90%;
-    --ring: 210 86% 53%;
-    --radius: 0.5rem;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-  }
+	:root {
+		--background: 0 0% 100%;
+		--foreground: 240 10% 3.9%;
+		--card: 0 0% 100%;
+		--card-foreground: 240 10% 3.9%;
+		--popover: 0 0% 100%;
+		--popover-foreground: 240 10% 3.9%;
+		--primary: 240 5.9% 10%;
+		--primary-foreground: 0 0% 98%;
+		--secondary: 240 4.8% 95.9%;
+		--secondary-foreground: 240 5.9% 10%;
+		--muted: 240 4.8% 95.9%;
+		--muted-foreground: 240 3.8% 46.1%;
+		--accent: 240 4.8% 95.9%;
+		--accent-foreground: 240 5.9% 10%;
+		--destructive: 0 84.2% 60.2%;
+		--destructive-foreground: 0 0% 98%;
+		--border: 240 5.9% 90%;
+		--input: 240 5.9% 90%;
+		--ring: 240 5.9% 10%;
+		--radius: 0.5rem;
+		--chart-1: 12 76% 61%;
+		--chart-2: 173 58% 39%;
+		--chart-3: 197 37% 24%;
+		--chart-4: 43 74% 66%;
+		--chart-5: 27 87% 67%;
+	}
 
-  .dark {
-    --background: 210 20% 5%;
-    --foreground: 210 20% 96%;
-    --card: 210 20% 8%;
-    --card-foreground: 210 20% 96%;
-    --popover: 210 20% 8%;
-    --popover-foreground: 210 20% 96%;
-    --primary: 210 86% 53%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 210 20% 12%;
-    --secondary-foreground: 210 20% 96%;
-    --muted: 210 20% 12%;
-    --muted-foreground: 210 20% 60%;
-    --accent: 180 55% 46%;
-    --accent-foreground: 210 20% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 210 20% 15%;
-    --input: 210 20% 15%;
-    --ring: 210 86% 53%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-  }
+	.dark {
+		--background: 240 10% 3.9%;
+		--foreground: 0 0% 98%;
+		--card: 240 10% 3.9%;
+		--card-foreground: 0 0% 98%;
+		--popover: 240 10% 3.9%;
+		--popover-foreground: 0 0% 98%;
+		--primary: 0 0% 98%;
+		--primary-foreground: 240 5.9% 10%;
+		--secondary: 240 3.7% 15.9%;
+		--secondary-foreground: 0 0% 98%;
+		--muted: 240 3.7% 15.9%;
+		--muted-foreground: 240 5% 64.9%;
+		--accent: 240 3.7% 15.9%;
+		--accent-foreground: 0 0% 98%;
+		--destructive: 0 62.8% 30.6%;
+		--destructive-foreground: 0 0% 98%;
+		--border: 240 3.7% 15.9%;
+		--input: 240 3.7% 15.9%;
+		--ring: 240 4.9% 83.9%;
+		--chart-1: 220 70% 50%;
+		--chart-2: 160 60% 45%;
+		--chart-3: 30 80% 55%;
+		--chart-4: 280 65% 60%;
+		--chart-5: 340 75% 55%;
+	}
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
+	* {
+		@apply border-border;
+	}
+	body {
+		@apply bg-background text-foreground;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
 }
 
 #resume-preview {
-  --resume-primary: hsl(210 86% 53%);
-  --resume-accent: hsl(180 55% 46%);
-  --resume-text: hsl(210 10% 23%);
-  --resume-muted-text: hsl(210 20% 45%);
+	--resume-primary: hsl(210 86% 53%);
+	--resume-accent: hsl(180 55% 46%);
+	--resume-text: hsl(210 10% 23%);
+	--resume-muted-text: hsl(210 20% 45%);
 }
 
 @media print {
-  @page {
-    size: A4;
-    margin: 0;
-  }
-  
-  html, body {
-    width: 210mm;
-    height: 297mm;
-    background-color: #fff;
-    -webkit-print-color-adjust: exact;
-  }
+	@page {
+		size: A4;
+		margin: 0;
+	}
 
-  body * {
-    visibility: hidden;
-  }
+	html,
+	body {
+		width: 210mm;
+		height: 297mm;
+		background-color: #fff;
+		-webkit-print-color-adjust: exact;
+	}
 
-  .no-print, .no-print * {
-    display: none !important;
-  }
-  
-  .print-container, .print-container * {
-      visibility: visible;
-  }
+	body * {
+		visibility: hidden;
+	}
 
-  .print-container {
-    position: absolute;
-    left: 0;
-    top: 0;
-    margin: 0;
-    padding: 0;
-    width: 100%;
-  }
+	.no-print,
+	.no-print * {
+		display: none !important;
+	}
 
-  #resume-preview {
-    visibility: visible;
-    position: static;
-    width: 100%;
-    height: auto;
-    margin: 0;
-    padding: 2rem;
-    border: none;
-    box-shadow: none;
-    transform: scale(1);
-    overflow: visible;
-    color-adjust: exact;
-    -webkit-print-color-adjust: exact;
-  }
+	.print-container,
+	.print-container * {
+		visibility: visible;
+	}
+
+	.print-container {
+		position: absolute;
+		left: 0;
+		top: 0;
+		margin: 0;
+		padding: 0;
+		width: 100%;
+	}
+
+	#resume-preview {
+		visibility: visible;
+		position: static;
+		width: 100%;
+		height: auto;
+		margin: 0;
+		padding: 2rem;
+		border: none;
+		box-shadow: none;
+		transform: scale(1);
+		overflow: visible;
+		color-adjust: exact;
+		-webkit-print-color-adjust: exact;
+	}
 }
