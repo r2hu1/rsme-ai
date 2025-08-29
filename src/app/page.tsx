@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { debounce } from 'lodash';
 
 import { parseExistingResume } from '@/ai/flows/parse-existing-resume';
 import { scoreSkills } from '@/ai/flows/score-skills-based-on-relevance';
@@ -71,9 +70,9 @@ export default function Home() {
     useState<ContentEvaluation | null>(null);
   const { toast } = useToast();
 
-  const handleResumeUpdate = useCallback(debounce((newData: ResumeData) => {
+  const handleResumeUpdate = useCallback((newData: ResumeData) => {
     setResumeData(newData);
-  }, 300), []);
+  }, []);
 
   const handleParseResume = async (text: string) => {
     setLoading('parse');
@@ -189,7 +188,7 @@ export default function Home() {
         </aside>
 
         <section className="flex-1 overflow-y-auto bg-muted/30 p-4 lg:p-8">
-          <ResumePreview resume={resumeData} onUpdate={setResumeData} />
+          <ResumePreview resume={resumeData} onUpdate={handleResumeUpdate} />
         </section>
       </main>
     </div>

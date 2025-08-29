@@ -8,13 +8,10 @@ import { debounce } from 'lodash';
 const EditableField = ({ value, onSave, multiline = false }: { value: string; onSave: (newValue: string) => void; multiline?: boolean }) => {
   const fieldRef = React.useRef<HTMLDivElement>(null);
 
-  const prevValue = React.useRef(value);
-
   React.useEffect(() => {
-    if (fieldRef.current && value !== prevValue.current && document.activeElement !== fieldRef.current) {
-        fieldRef.current.innerHTML = value;
+    if (fieldRef.current && value !== fieldRef.current.innerHTML) {
+      fieldRef.current.innerHTML = value;
     }
-    prevValue.current = value;
   }, [value]);
 
   const handleBlur = () => {
