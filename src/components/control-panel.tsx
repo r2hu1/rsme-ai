@@ -17,7 +17,6 @@ import {
   Palette,
 } from 'lucide-react';
 import { produce } from 'immer';
-import { useDebounceCallback } from 'usehooks-ts'
 
 import {
   Accordion,
@@ -116,17 +115,8 @@ export function ControlPanel({
 
   const form = useForm<ResumeData>({
     resolver: zodResolver(resumeSchema),
-    values: resumeData,
+    defaultValues: resumeData,
   });
-
-  const debouncedOnResumeUpdate = useDebounceCallback(onResumeUpdate, 300);
-
-  useEffect(() => {
-    const subscription = form.watch((value) => {
-      debouncedOnResumeUpdate(value as Partial<ResumeData>);
-    });
-    return () => subscription.unsubscribe();
-  }, [form, debouncedOnResumeUpdate]);
 
   useEffect(() => {
     form.reset(resumeData);
@@ -151,6 +141,11 @@ export function ControlPanel({
     control: form.control,
     name: "projects",
   });
+
+  const handleBlur = (fieldName: keyof ResumeData) => {
+    const value = form.getValues(fieldName as any);
+    onResumeUpdate({ [fieldName]: value });
+  };
   
   const handleItemRemove = (remover: (index: number) => void, index: number, fieldName: keyof ResumeData) => {
     remover(index);
@@ -319,6 +314,7 @@ export function ControlPanel({
                         <Input
                           type="color"
                           value={hslToHex(field.value)}
+                          onBlur={() => handleBlur('theme')}
                           onChange={(e) => field.onChange(hexToHsl(e.target.value))}
                           className="col-span-2 h-8 p-1"
                         />
@@ -336,6 +332,7 @@ export function ControlPanel({
                         <Input
                           type="color"
                           value={hslToHex(field.value)}
+                          onBlur={() => handleBlur('theme')}
                           onChange={(e) => field.onChange(hexToHsl(e.target.value))}
                           className="col-span-2 h-8 p-1"
                         />
@@ -353,6 +350,7 @@ export function ControlPanel({
                         <Input
                           type="color"
                           value={hslToHex(field.value)}
+                          onBlur={() => handleBlur('theme')}
                           onChange={(e) => field.onChange(hexToHsl(e.target.value))}
                           className="col-span-2 h-8 p-1"
                         />
@@ -370,6 +368,7 @@ export function ControlPanel({
                         <Input
                           type="color"
                           value={hslToHex(field.value)}
+                          onBlur={() => handleBlur('theme')}
                           onChange={(e) => field.onChange(hexToHsl(e.target.value))}
                           className="col-span-2 h-8 p-1"
                         />
@@ -389,7 +388,7 @@ export function ControlPanel({
                           max={8}
                           step={1}
                           value={[field.value]}
-                          onValueChange={(v) => field.onChange(v[0])}
+                          onValueChange={(v) => { field.onChange(v[0]); handleBlur('theme')}}
                           className="col-span-2"
                         />
                       </FormControl>
@@ -412,16 +411,16 @@ export function ControlPanel({
                 <Card>
                   <CardHeader><CardTitle>Personal Details</CardTitle></CardHeader>
                   <CardContent className="space-y-4">
-                    <FormField control={form.control} name="name" render={({ field }) => (<FormItem> <FormLabel>Full Name</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem>)} />
-                    <FormField control={form.control} name="email" render={({ field }) => (<FormItem> <FormLabel>Email</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem>)} />
-                    <FormField control={form.control} name="phone" render={({ field }) => (<FormItem> <FormLabel>Phone</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem>)} />
+                    <FormField control={form.control} name="name" render={({ field }) => (<FormItem> <FormLabel>Full Name</FormLabel> <FormControl><Input {...field} onBlur={() => handleBlur('name')} /></FormControl> </FormItem>)} />
+                    <FormField control={form.control} name="email" render={({ field }) => (<FormItem> <FormLabel>Email</FormLabel> <FormControl><Input {...field} onBlur={() => handleBlur('email')} /></FormControl> </FormItem>)} />
+                    <FormField control={form.control} name="phone" render={({ field }) => (<FormItem> <FormLabel>Phone</FormLabel> <FormControl><Input {...field} onBlur={() => handleBlur('phone')} /></FormControl> </FormItem>)} />
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardHeader><CardTitle>Summary</CardTitle></CardHeader>
                   <CardContent>
-                    <FormField control={form.control} name="summary" render={({ field }) => (<FormItem> <FormControl><Textarea {...field} rows={5} /></FormControl> </FormItem>)} />
+                    <FormField control={form.control} name="summary" render={({ field }) => (<FormItem> <FormControl><Textarea {...field} rows={5} onBlur={() => handleBlur('summary')} /></FormControl> </FormItem>)} />
                   </CardContent>
                 </Card>
 
@@ -432,10 +431,10 @@ export function ControlPanel({
                       <Card key={field.id} className="p-4 relative">
                         <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6" onClick={() => handleItemRemove(removeExp, index, 'experience')}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                         <div className="space-y-2">
-                          <FormField control={form.control} name={`experience.${index}.title`} render={({ field }) => (<FormItem> <FormLabel>Title</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem>)} />
-                          <FormField control={form.control} name={`experience.${index}.company`} render={({ field }) => (<FormItem> <FormLabel>Company</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem>)} />
-                          <FormField control={form.control} name={`experience.${index}.dates`} render={({ field }) => (<FormItem> <FormLabel>Dates</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem>)} />
-                          <FormField control={form.control} name={`experience.${index}.description`} render={({ field }) => (<FormItem> <FormLabel>Description</FormLabel> <FormControl><Textarea {...field} /></FormControl> </FormItem>)} />
+                          <FormField control={form.control} name={`experience.${index}.title`} render={({ field }) => (<FormItem> <FormLabel>Title</FormLabel> <FormControl><Input {...field} onBlur={() => handleBlur('experience')} /></FormControl> </FormItem>)} />
+                          <FormField control={form.control} name={`experience.${index}.company`} render={({ field }) => (<FormItem> <FormLabel>Company</FormLabel> <FormControl><Input {...field} onBlur={() => handleBlur('experience')} /></FormControl> </FormItem>)} />
+                          <FormField control={form.control} name={`experience.${index}.dates`} render={({ field }) => (<FormItem> <FormLabel>Dates</FormLabel> <FormControl><Input {...field} onBlur={() => handleBlur('experience')} /></FormControl> </FormItem>)} />
+                          <FormField control={form.control} name={`experience.${index}.description`} render={({ field }) => (<FormItem> <FormLabel>Description</FormLabel> <FormControl><Textarea {...field} onBlur={() => handleBlur('experience')} /></FormControl> </FormItem>)} />
                         </div>
                       </Card>
                     ))}
@@ -449,9 +448,9 @@ export function ControlPanel({
                       <Card key={field.id} className="p-4 relative">
                         <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6" onClick={() => handleItemRemove(removeEdu, index, 'education')}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                         <div className="space-y-2">
-                          <FormField control={form.control} name={`education.${index}.institution`} render={({ field }) => (<FormItem> <FormLabel>Institution</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem>)} />
-                          <FormField control={form.control} name={`education.${index}.degree`} render={({ field }) => (<FormItem> <FormLabel>Degree</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem>)} />
-                          <FormField control={form.control} name={`education.${index}.dates`} render={({ field }) => (<FormItem> <FormLabel>Dates</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem>)} />
+                          <FormField control={form.control} name={`education.${index}.institution`} render={({ field }) => (<FormItem> <FormLabel>Institution</FormLabel> <FormControl><Input {...field} onBlur={() => handleBlur('education')} /></FormControl> </FormItem>)} />
+                          <FormField control={form.control} name={`education.${index}.degree`} render={({ field }) => (<FormItem> <FormLabel>Degree</FormLabel> <FormControl><Input {...field} onBlur={() => handleBlur('education')} /></FormControl> </FormItem>)} />
+                          <FormField control={form.control} name={`education.${index}.dates`} render={({ field }) => (<FormItem> <FormLabel>Dates</FormLabel> <FormControl><Input {...field} onBlur={() => handleBlur('education')} /></FormControl> </FormItem>)} />
                         </div>
                       </Card>
                     ))}
@@ -465,10 +464,10 @@ export function ControlPanel({
                       <Card key={field.id} className="p-4 relative">
                         <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6" onClick={() => handleItemRemove(removeProject, index, 'projects')}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                         <div className="space-y-2">
-                          <FormField control={form.control} name={`projects.${index}.name`} render={({ field }) => (<FormItem> <FormLabel>Project Name</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem>)} />
-                          <FormField control={form.control} name={`projects.${index}.dates`} render={({ field }) => (<FormItem> <FormLabel>Dates</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem>)} />
-                          <FormField control={form.control} name={`projects.${index}.url`} render={({ field }) => (<FormItem> <FormLabel>URL</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem>)} />
-                          <FormField control={form.control} name={`projects.${index}.description`} render={({ field }) => (<FormItem> <FormLabel>Description</FormLabel> <FormControl><Textarea {...field} /></FormControl> </FormItem>)} />
+                          <FormField control={form.control} name={`projects.${index}.name`} render={({ field }) => (<FormItem> <FormLabel>Project Name</FormLabel> <FormControl><Input {...field} onBlur={() => handleBlur('projects')} /></FormControl> </FormItem>)} />
+                          <FormField control={form.control} name={`projects.${index}.dates`} render={({ field }) => (<FormItem> <FormLabel>Dates</FormLabel> <FormControl><Input {...field} onBlur={() => handleBlur('projects')} /></FormControl> </FormItem>)} />
+                          <FormField control={form.control} name={`projects.${index}.url`} render={({ field }) => (<FormItem> <FormLabel>URL</FormLabel> <FormControl><Input {...field} onBlur={() => handleBlur('projects')} /></FormControl> </FormItem>)} />
+                          <FormField control={form.control} name={`projects.${index}.description`} render={({ field }) => (<FormItem> <FormLabel>Description</FormLabel> <FormControl><Textarea {...field} onBlur={() => handleBlur('projects')} /></FormControl> </FormItem>)} />
                         </div>
                       </Card>
                     ))}
@@ -486,7 +485,7 @@ export function ControlPanel({
                     <div className="flex flex-wrap gap-2">
                       {skillFields.map((field, index) => (
                         <div key={field.id} className="flex items-center gap-1 bg-secondary rounded-full">
-                          <Controller name={`skills.${index}`} control={form.control} render={({ field }) => (<Input {...field} className="h-8 bg-transparent border-none focus-visible:ring-0 w-32" />)} />
+                          <Controller name={`skills.${index}`} control={form.control} render={({ field }) => (<Input {...field} onBlur={() => handleBlur('skills')} className="h-8 bg-transparent border-none focus-visible:ring-0 w-32" />)} />
                           <Button type="button" variant="ghost" size="icon" className="h-6 w-6 rounded-full" onClick={() => handleItemRemove(removeSkill, index, 'skills')}><Trash2 className="h-3 w-3 text-destructive" /></Button>
                         </div>
                       ))}
