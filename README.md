@@ -1,6 +1,16 @@
-# ResumeAI Pro
+# ResumeAI
 
-ResumeAI Pro is a next-generation resume builder that leverages the power of generative AI to help you create, edit, and optimize your resume with ease. This application provides a seamless, real-time editing experience, AI-driven content analysis, and powerful customization options.
+An simple and easy to use Resume Builder with AI superpowers.
+
+## Consent
+
+This is a highly vibe-coded project to test Gemini 2.5 Flash.
+
+So what do I think?
+I think we’ve come too far not to notice AI coding in hours what humans would take days to build.
+It’s scary.
+It’s appealing.
+And it feels like we’re just getting started.
 
 ## Features
 
