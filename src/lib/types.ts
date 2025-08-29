@@ -124,9 +124,12 @@ export interface ResumeData extends Omit<ParseExistingResumeOutput, 'experience'
   projects?: Project[];
   sections: Section[];
   theme: {
-    primaryColor: string;
-    accentColor: string;
-    borderWidth: number;
+    headingColor: string;
+    sectionTitleColor: string;
+    itemTitleColor: string;
+    itemDescriptionColor: string;
+    linkColor: string;
+    secondaryColor: string;
   };
 }
 

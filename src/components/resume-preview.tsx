@@ -122,7 +122,7 @@ const DraggableSection = ({ section, resume, onUpdate, children }: { section: Se
      <section ref={setNodeRef} style={style} className="relative group/section">
         <div
           className="flex items-center gap-3 text-lg font-semibold font-headline pb-2 mb-4"
-          style={{ borderBottomWidth: resume.theme.borderWidth, borderColor: 'var(--resume-primary)' }}
+          style={{ borderBottom: '2px solid var(--resume-section-title-color)', color: 'var(--resume-section-title-color)' }}
         >
           <EditableField value={section.title} onSave={handleTitleUpdate} as="h2" className="flex-grow" />
            <div className="flex items-center gap-1 no-print">
@@ -219,7 +219,7 @@ export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpda
         case 'summary':
             return summary != null && (
             <DraggableSection key={sectionId} section={sectionData} resume={resume} onUpdate={onUpdate}>
-              <div className="text-sm leading-relaxed"><EditableField value={summary} onSave={(v) => handleUpdate('summary', v)} multiline /></div>
+              <div className="text-sm leading-relaxed" style={{ color: 'var(--resume-item-description-color)' }}><EditableField value={summary} onSave={(v) => handleUpdate('summary', v)} multiline /></div>
             </DraggableSection>
           );
         case 'experience':
@@ -232,11 +232,11 @@ export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpda
                       <SortableItem key={exp.id} id={exp.id!}>
                         <div className="space-y-1">
                           <div className="flex justify-between items-baseline">
-                            <h3 className="font-semibold"><EditableField value={exp.title || ''} onSave={(v) => handleItemUpdate(exp.id!, 'experience', 'title', v)} as="div" /></h3>
-                            <div className="text-xs text-resume-muted-text"><EditableField value={exp.dates || ''} onSave={(v) => handleItemUpdate(exp.id!, 'experience', 'dates', v)} /></div>
+                            <h3 className="font-semibold" style={{ color: 'var(--resume-item-title-color)' }}><EditableField value={exp.title || ''} onSave={(v) => handleItemUpdate(exp.id!, 'experience', 'title', v)} as="div" /></h3>
+                            <div className="text-xs" style={{ color: 'var(--resume-secondary-color)' }}><EditableField value={exp.dates || ''} onSave={(v) => handleItemUpdate(exp.id!, 'experience', 'dates', v)} /></div>
                           </div>
-                          <div className="text-sm font-medium" style={{color: 'var(--resume-primary)'}}><EditableField value={exp.company || ''} onSave={(v) => handleItemUpdate(exp.id!, 'experience', 'company', v)} /></div>
-                          <div className="text-sm text-resume-muted-text pt-1"><EditableField value={exp.description || ''} onSave={(v) => handleItemUpdate(exp.id!, 'experience', 'description', v)} multiline /></div>
+                          <div className="text-sm font-medium" style={{ color: 'var(--resume-secondary-color)' }}><EditableField value={exp.company || ''} onSave={(v) => handleItemUpdate(exp.id!, 'experience', 'company', v)} /></div>
+                          <div className="text-sm pt-1" style={{ color: 'var(--resume-item-description-color)' }}><EditableField value={exp.description || ''} onSave={(v) => handleItemUpdate(exp.id!, 'experience', 'description', v)} multiline /></div>
                         </div>
                       </SortableItem>
                     ))}
@@ -255,16 +255,16 @@ export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpda
                       <SortableItem key={project.id} id={project.id!}>
                         <div className="space-y-1 break-inside-avoid">
                           <div className="flex justify-between items-baseline">
-                            <h3 className="font-semibold"><EditableField value={project.name || ''} onSave={(v) => handleItemUpdate(project.id!, 'projects', 'name', v)} as="div" /></h3>
-                            <div className="text-xs text-resume-muted-text"><EditableField value={project.dates || ''} onSave={(v) => handleItemUpdate(project.id!, 'projects', 'dates', v)} /></div>
+                            <h3 className="font-semibold" style={{ color: 'var(--resume-item-title-color)' }}><EditableField value={project.name || ''} onSave={(v) => handleItemUpdate(project.id!, 'projects', 'name', v)} as="div" /></h3>
+                            <div className="text-xs" style={{ color: 'var(--resume-secondary-color)' }}><EditableField value={project.dates || ''} onSave={(v) => handleItemUpdate(project.id!, 'projects', 'dates', v)} /></div>
                           </div>
                           {project.url && (
-                              <div className="flex items-center gap-2 text-sm hover:underline" style={{color: 'var(--resume-primary)'}}>
+                              <div className="flex items-center gap-2 text-sm hover:underline" style={{ color: 'var(--resume-link-color)' }}>
                                   <Link className="h-3 w-3" />
                                   <EditableField value={project.url} onSave={(v) => handleItemUpdate(project.id!, 'projects', 'url', v)} />
                               </div>
                           )}
-                          <div className="text-sm text-resume-muted-text pt-1"><EditableField value={project.description || ''} onSave={(v) => handleItemUpdate(project.id!, 'projects', 'description', v)} multiline /></div>
+                          <div className="text-sm pt-1" style={{ color: 'var(--resume-item-description-color)' }}><EditableField value={project.description || ''} onSave={(v) => handleItemUpdate(project.id!, 'projects', 'description', v)} multiline /></div>
                         </div>
                       </SortableItem>
                     ))}
@@ -283,10 +283,10 @@ export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpda
                       <SortableItem key={edu.id} id={edu.id!}>
                         <div>
                           <div className="flex justify-between items-baseline">
-                            <h3 className="font-semibold"><EditableField value={edu.institution || ''} onSave={(v) => handleItemUpdate(edu.id!, 'education', 'institution', v)} as="div" /></h3>
-                            <div className="text-xs text-resume-muted-text"><EditableField value={edu.dates || ''} onSave={(v) => handleItemUpdate(edu.id!, 'education', 'dates', v)} /></div>
+                            <h3 className="font-semibold" style={{ color: 'var(--resume-item-title-color)' }}><EditableField value={edu.institution || ''} onSave={(v) => handleItemUpdate(edu.id!, 'education', 'institution', v)} as="div" /></h3>
+                            <div className="text-xs" style={{ color: 'var(--resume-secondary-color)' }}><EditableField value={edu.dates || ''} onSave={(v) => handleItemUpdate(edu.id!, 'education', 'dates', v)} /></div>
                           </div>
-                          <div className="text-sm text-resume-muted-text"><EditableField value={edu.degree || ''} onSave={(v) => handleItemUpdate(edu.id!, 'education', 'degree', v)} /></div>
+                          <div className="text-sm" style={{ color: 'var(--resume-item-description-color)' }}><EditableField value={edu.degree || ''} onSave={(v) => handleItemUpdate(edu.id!, 'education', 'degree', v)} /></div>
                         </div>
                       </SortableItem>
                     ))}
@@ -300,7 +300,7 @@ export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpda
             <DraggableSection key={sectionId} section={sectionData} resume={resume} onUpdate={onUpdate}>
               <div className="flex flex-wrap gap-2">
                 {skills.map((skill, index) => (
-                  <div key={index} style={{backgroundColor: 'var(--resume-accent)', color: 'var(--resume-primary-foreground)'}} className="bg-secondary text-secondary-foreground rounded-full px-3 py-1 text-sm">
+                  <div key={index} style={{backgroundColor: 'var(--resume-secondary-color)', color: 'white'}} className="rounded-full px-3 py-1 text-sm">
                     <EditableField value={skill} onSave={(v) => handleUpdate(`skills.${index}`, v)} />
                   </div>
                 ))}
@@ -310,7 +310,7 @@ export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpda
         case 'custom':
           return (
             <DraggableSection key={sectionId} section={sectionData} resume={resume} onUpdate={onUpdate}>
-              <div className="text-sm leading-relaxed">
+              <div className="text-sm leading-relaxed" style={{ color: 'var(--resume-item-description-color)' }}>
                   <EditableField value={sectionData.content || ''} onSave={(v) => handleSectionContentUpdate(sectionData.id, v)} multiline />
               </div>
             </DraggableSection>
@@ -324,20 +324,21 @@ export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpda
   return (
     <div 
         id="resume-preview" 
-        className="w-full h-full bg-card rounded-lg shadow-lg overflow-y-auto p-8 lg:p-12 text-resume-text"
+        className="w-full h-full bg-card rounded-lg shadow-lg overflow-y-auto p-8 lg:p-12"
         style={{
-            '--resume-primary': theme.primaryColor,
-            '--resume-accent': theme.accentColor,
-            '--resume-text': 'hsl(210 10% 23%)', // Hardcoded as per globals.css
-            '--resume-muted-text': 'hsl(210 20% 45%)', // Hardcoded as per globals.css
-            '--resume-primary-foreground': 'hsl(210 20% 98%)', // Hardcoded for accent bg
+            '--resume-heading-color': theme.headingColor,
+            '--resume-section-title-color': theme.sectionTitleColor,
+            '--resume-item-title-color': theme.itemTitleColor,
+            '--resume-item-description-color': theme.itemDescriptionColor,
+            '--resume-link-color': theme.linkColor,
+            '--resume-secondary-color': theme.secondaryColor,
         } as React.CSSProperties}
     >
       <div className="flex flex-col gap-8">
         {/* Header */}
         <header className="text-center pb-6">
-          {name != null && <h1 className="text-4xl font-bold font-headline tracking-tight"><EditableField value={name} onSave={(v) => handleUpdate('name', v)} as="h1" /></h1>}
-          <div className="flex justify-center items-center gap-6 mt-3 text-sm text-resume-muted-text">
+          {name != null && <h1 className="text-4xl font-bold font-headline tracking-tight" style={{ color: 'var(--resume-heading-color)' }}><EditableField value={name} onSave={(v) => handleUpdate('name', v)} as="h1" /></h1>}
+          <div className="flex justify-center items-center gap-6 mt-3 text-sm" style={{ color: 'var(--resume-secondary-color)' }}>
             {email != null && (
               <div className="flex items-center gap-2 hover:text-resume-primary transition-colors">
                 <Mail className="h-4 w-4" />

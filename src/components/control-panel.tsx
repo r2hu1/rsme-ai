@@ -97,9 +97,12 @@ const resumeSchema = z.object({
     content: z.string().optional(),
   })),
   theme: z.object({
-    primaryColor: z.string(),
-    accentColor: z.string(),
-    borderWidth: z.number(),
+    headingColor: z.string(),
+    sectionTitleColor: z.string(),
+    itemTitleColor: z.string(),
+    itemDescriptionColor: z.string(),
+    linkColor: z.string(),
+    secondaryColor: z.string(),
   }),
 });
 
@@ -150,6 +153,12 @@ export function ControlPanel({
   const handleBlur = (fieldName: keyof ResumeData) => {
     const value = form.getValues(fieldName as any);
     onResumeUpdate({ [fieldName]: value });
+  };
+
+  const handleThemeChange = (field: keyof ResumeData['theme'], value: string) => {
+    const currentTheme = form.getValues('theme');
+    const newTheme = { ...currentTheme, [field]: value };
+    onResumeUpdate({ theme: newTheme });
   };
   
   const handleItemRemove = (remover: (index: number) => void, index: number, fieldName: keyof ResumeData) => {
@@ -271,6 +280,14 @@ export function ControlPanel({
     return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
   }
 
+  const themeFields = [
+    { name: 'headingColor', label: 'Heading' },
+    { name: 'sectionTitleColor', label: 'Section Title' },
+    { name: 'itemTitleColor', label: 'Item Title' },
+    { name: 'secondaryColor', label: 'Secondary Text' },
+    { name: 'linkColor', label: 'Link' },
+    { name: 'itemDescriptionColor', label: 'Description' },
+  ] as const;
 
   return (
     <Form {...form}>
@@ -377,61 +394,26 @@ export function ControlPanel({
             <Card>
               <CardHeader><CardTitle className="flex items-center gap-2"><Palette/> Theme (PDF &amp; Print)</CardTitle></CardHeader>
               <CardContent className="grid gap-4">
-                <FormField
-                  control={form.control}
-                  name="theme.primaryColor"
-                  render={({ field }) => (
-                    <FormItem className="grid grid-cols-3 items-center gap-4">
-                      <FormLabel>Primary</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="color"
-                          value={hslToHex(field.value)}
-                          onBlur={() => handleBlur('theme')}
-                          onChange={(e) => field.onChange(hexToHsl(e.target.value))}
-                          className="col-span-2 h-8 p-1"
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="theme.accentColor"
-                  render={({ field }) => (
-                    <FormItem className="grid grid-cols-3 items-center gap-4">
-                      <FormLabel>Accent</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="color"
-                          value={hslToHex(field.value)}
-                          onBlur={() => handleBlur('theme')}
-                          onChange={(e) => field.onChange(hexToHsl(e.target.value))}
-                          className="col-span-2 h-8 p-1"
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="theme.borderWidth"
-                  render={({ field }) => (
-                    <FormItem className="grid grid-cols-3 items-center gap-4">
-                      <FormLabel>Border Width</FormLabel>
-                      <FormControl>
-                        <Slider
-                          min={0}
-                          max={8}
-                          step={1}
-                          value={[field.value]}
-                          onValueChange={(v) => { field.onChange(v[0]); handleBlur('theme')}}
-                          className="col-span-2"
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                  />
+                 {themeFields.map((fieldItem) => (
+                    <FormField
+                      key={fieldItem.name}
+                      control={form.control}
+                      name={`theme.${fieldItem.name}`}
+                      render={({ field }) => (
+                        <FormItem className="grid grid-cols-3 items-center gap-4">
+                          <FormLabel>{fieldItem.label}</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="color"
+                              value={hslToHex(field.value)}
+                              onChange={(e) => handleThemeChange(fieldItem.name, hexToHsl(e.target.value))}
+                              className="col-span-2 h-8 p-1"
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  ))}
               </CardContent>
             </Card>
           </AccordionContent>

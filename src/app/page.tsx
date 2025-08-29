@@ -101,11 +101,12 @@ const initialResume: ResumeData = {
     { id: 'skills', type: 'skills', title: 'Skills', enabled: true },
   ],
   theme: {
-    primaryColor: 'hsl(210 86% 53%)',
-    accentColor: 'hsl(180 55% 46%)',
-    textColor: 'hsl(210 10% 23%)',
-    mutedTextColor: 'hsl(210 20% 45%)',
-    borderWidth: 2,
+    headingColor: 'hsl(210 10% 23%)',
+    sectionTitleColor: 'hsl(210 86% 53%)',
+    itemTitleColor: 'hsl(210 86% 53%)',
+    secondaryColor: 'hsl(210 10% 23%)',
+    linkColor: 'hsl(210 86% 53%)',
+    itemDescriptionColor: 'hsl(210 20% 45%)',
   },
 };
 
