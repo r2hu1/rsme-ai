@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 
 // Base Schemas
@@ -35,7 +36,7 @@ export type ParseExistingResumeInput = z.infer<typeof ParseExistingResumeInputSc
 
 export const ParseExistingResumeOutputSchema = z.object({
   name: z.string().optional().describe('The name of the resume owner.'),
-  email: z.string().email().optional().or(z.literal('')).describe('The email address of the resume owner.'),
+  email: z.string().email().optional().describe('The email address of the resume owner.'),
   phone: z.string().optional().describe('The phone number of the resume owner.'),
   summary: z.string().optional().describe('A brief summary or objective statement.'),
   experience: z.array(ExperienceSchema).optional().describe('A list of work experiences.'),
