@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useRef, useMemo } from 'react';
+import React, { useRef, useMemo, useState } from 'react';
 import type { ResumeData, Experience, Education, Project, SectionType, Section as SectionData } from '@/lib/types';
-import { Mail, Phone, User, Briefcase, GraduationCap, Wrench, Sparkles, FolderGit2, Link, GripVertical } from 'lucide-react';
+import { Mail, Phone, Link, GripVertical, Sparkles } from 'lucide-react';
 import { produce } from 'immer';
 import {
   DndContext,
@@ -11,14 +11,14 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
-  DragOverlay
+  DragOverlay,
+  Active
 } from '@dnd-kit/core';
 import {
   arrayMove,
   SortableContext,
   useSortable,
   verticalListSortingStrategy,
-  SortableContextProps,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/lib/utils';
@@ -62,8 +62,8 @@ const EditableField = ({ value, onSave, multiline = false, as: Component = 'div'
   );
 };
 
-// Item component for sortable lists
-function SortableItem<T extends { id: string }>({ id, onUpdate, children }: { id: string, onUpdate: (id: string, path: string, value: any) => void, children: React.ReactNode }) {
+
+function SortableItem({ id, children }: { id: string, children: React.ReactNode }) {
   const {
     attributes,
     listeners,
@@ -82,15 +82,14 @@ function SortableItem<T extends { id: string }>({ id, onUpdate, children }: { id
   return (
     <div ref={setNodeRef} style={style} className="relative group/item">
       {children}
-      <button {...attributes} {...listeners} className="absolute -left-6 top-1/2 -translate-y-1/2 p-1 text-muted-foreground opacity-0 group-hover/item:opacity-100 focus:opacity-100 transition-opacity">
+      <button {...attributes} {...listeners} className="absolute -left-6 top-1/2 -translate-y-1/2 p-1 text-muted-foreground opacity-0 group-hover/item:opacity-100 focus:opacity-100 transition-opacity cursor-grab active:cursor-grabbing">
         <GripVertical className="h-4 w-4" />
       </button>
     </div>
   );
 }
 
-// Draggable Section component
-const Section = ({ section, resume, onUpdate, children }: { section: SectionData, resume: ResumeData, onUpdate: (data: Partial<ResumeData>) => void, children: React.ReactNode }) => {
+const DraggableSection = ({ section, resume, onUpdate, children }: { section: SectionData, resume: ResumeData, onUpdate: (data: Partial<ResumeData>) => void, children: React.ReactNode }) => {
    const {
     attributes,
     listeners,
@@ -144,19 +143,13 @@ export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpda
     }));
   };
 
-  const handleItemUpdate = (itemId: string, path: string, value: any) => {
+  const handleItemUpdate = (itemId: string, sectionType: SectionType, field: string, value: any) => {
      onUpdate(produce(resume, draft => {
-        const [sectionKey, ...rest] = path.split('.');
-        const items = draft[sectionKey as SectionType] as any[];
+        const items = draft[sectionType] as any[];
         if (items && Array.isArray(items)) {
             const itemIndex = items.findIndex(i => i.id === itemId);
             if (itemIndex > -1) {
-                let current: any = items[itemIndex];
-                const keys = rest.slice(0, -1);
-                 for (let i = 0; i < keys.length; i++) {
-                    current = current[keys[i]];
-                }
-                current[rest[rest.length - 1]] = value;
+              (items[itemIndex] as any)[field] = value;
             }
         }
     }));
@@ -202,86 +195,86 @@ export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpda
     switch(sectionId) {
         case 'summary':
             return summary != null && (
-            <Section key={sectionId} section={sectionData} resume={resume} onUpdate={onUpdate}>
+            <DraggableSection key={sectionId} section={sectionData} resume={resume} onUpdate={onUpdate}>
               <div className="text-sm leading-relaxed"><EditableField value={summary} onSave={(v) => handleUpdate('summary', v)} multiline /></div>
-            </Section>
+            </DraggableSection>
           );
         case 'experience':
             return experience && experience.length > 0 && (
-            <Section key={sectionId} section={sectionData} resume={resume} onUpdate={onUpdate}>
+            <DraggableSection key={sectionId} section={sectionData} resume={resume} onUpdate={onUpdate}>
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => handleItemDragEnd(e, 'experience')}>
-                <SortableContext items={experience} strategy={verticalListSortingStrategy}>
+                <SortableContext items={experience.map(e => e.id!)} strategy={verticalListSortingStrategy}>
                   <div className="space-y-6">
                     {experience.map((exp) => (
-                      <SortableItem key={exp.id} id={exp.id!} onUpdate={handleItemUpdate}>
+                      <SortableItem key={exp.id} id={exp.id!}>
                         <div className="space-y-1">
                           <div className="flex justify-between items-baseline">
-                            <h3 className="font-semibold"><EditableField value={exp.title || ''} onSave={(v) => handleItemUpdate(exp.id!, 'experience.title', v)} as="div" /></h3>
-                            <div className="text-xs text-muted-foreground"><EditableField value={exp.dates || ''} onSave={(v) => handleItemUpdate(exp.id!, 'experience.dates', v)} /></div>
+                            <h3 className="font-semibold"><EditableField value={exp.title || ''} onSave={(v) => handleItemUpdate(exp.id!, 'experience', 'title', v)} as="div" /></h3>
+                            <div className="text-xs text-muted-foreground"><EditableField value={exp.dates || ''} onSave={(v) => handleItemUpdate(exp.id!, 'experience', 'dates', v)} /></div>
                           </div>
-                          <div className="text-sm font-medium text-primary"><EditableField value={exp.company || ''} onSave={(v) => handleItemUpdate(exp.id!, 'experience.company', v)} /></div>
-                          <div className="text-sm text-muted-foreground pt-1"><EditableField value={exp.description || ''} onSave={(v) => handleItemUpdate(exp.id!, 'experience.description', v)} multiline /></div>
+                          <div className="text-sm font-medium text-primary"><EditableField value={exp.company || ''} onSave={(v) => handleItemUpdate(exp.id!, 'experience', 'company', v)} /></div>
+                          <div className="text-sm text-muted-foreground pt-1"><EditableField value={exp.description || ''} onSave={(v) => handleItemUpdate(exp.id!, 'experience', 'description', v)} multiline /></div>
                         </div>
                       </SortableItem>
                     ))}
                   </div>
                 </SortableContext>
               </DndContext>
-            </Section>
+            </DraggableSection>
           );
         case 'projects':
             return projects && projects.length > 0 && (
-            <Section key={sectionId} section={sectionData} resume={resume} onUpdate={onUpdate}>
+            <DraggableSection key={sectionId} section={sectionData} resume={resume} onUpdate={onUpdate}>
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => handleItemDragEnd(e, 'projects')}>
-                <SortableContext items={projects} strategy={verticalListSortingStrategy}>
+                <SortableContext items={projects.map(p => p.id!)} strategy={verticalListSortingStrategy}>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                     {projects.map((project) => (
-                      <SortableItem key={project.id} id={project.id!} onUpdate={handleItemUpdate}>
+                      <SortableItem key={project.id} id={project.id!}>
                         <div className="space-y-1 break-inside-avoid">
                           <div className="flex justify-between items-baseline">
-                            <h3 className="font-semibold"><EditableField value={project.name || ''} onSave={(v) => handleItemUpdate(project.id!, 'projects.name', v)} as="div" /></h3>
-                            <div className="text-xs text-muted-foreground"><EditableField value={project.dates || ''} onSave={(v) => handleItemUpdate(project.id!, 'projects.dates', v)} /></div>
+                            <h3 className="font-semibold"><EditableField value={project.name || ''} onSave={(v) => handleItemUpdate(project.id!, 'projects', 'name', v)} as="div" /></h3>
+                            <div className="text-xs text-muted-foreground"><EditableField value={project.dates || ''} onSave={(v) => handleItemUpdate(project.id!, 'projects', 'dates', v)} /></div>
                           </div>
                           {project.url && (
                               <div className="flex items-center gap-2 text-sm text-primary hover:underline">
                                   <Link className="h-3 w-3" />
-                                  <EditableField value={project.url} onSave={(v) => handleItemUpdate(project.id!, 'projects.url', v)} />
+                                  <EditableField value={project.url} onSave={(v) => handleItemUpdate(project.id!, 'projects', 'url', v)} />
                               </div>
                           )}
-                          <div className="text-sm text-muted-foreground pt-1"><EditableField value={project.description || ''} onSave={(v) => handleItemUpdate(project.id!, 'projects.description', v)} multiline /></div>
+                          <div className="text-sm text-muted-foreground pt-1"><EditableField value={project.description || ''} onSave={(v) => handleItemUpdate(project.id!, 'projects', 'description', v)} multiline /></div>
                         </div>
                       </SortableItem>
                     ))}
                   </div>
                 </SortableContext>
               </DndContext>
-            </Section>
+            </DraggableSection>
           );
         case 'education':
           return education && education.length > 0 && (
-            <Section key={sectionId} section={sectionData} resume={resume} onUpdate={onUpdate}>
+            <DraggableSection key={sectionId} section={sectionData} resume={resume} onUpdate={onUpdate}>
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => handleItemDragEnd(e, 'education')}>
-                <SortableContext items={education} strategy={verticalListSortingStrategy}>
+                <SortableContext items={education.map(e => e.id!)} strategy={verticalListSortingStrategy}>
                   <div className="space-y-4">
                     {education.map((edu) => (
-                      <SortableItem key={edu.id} id={edu.id!} onUpdate={handleItemUpdate}>
+                      <SortableItem key={edu.id} id={edu.id!}>
                         <div>
                           <div className="flex justify-between items-baseline">
-                            <h3 className="font-semibold"><EditableField value={edu.institution || ''} onSave={(v) => handleItemUpdate(edu.id!, 'education.institution', v)} as="div" /></h3>
-                            <div className="text-xs text-muted-foreground"><EditableField value={edu.dates || ''} onSave={(v) => handleItemUpdate(edu.id!, 'education.dates', v)} /></div>
+                            <h3 className="font-semibold"><EditableField value={edu.institution || ''} onSave={(v) => handleItemUpdate(edu.id!, 'education', 'institution', v)} as="div" /></h3>
+                            <div className="text-xs text-muted-foreground"><EditableField value={edu.dates || ''} onSave={(v) => handleItemUpdate(edu.id!, 'education', 'dates', v)} /></div>
                           </div>
-                          <div className="text-sm text-muted-foreground"><EditableField value={edu.degree || ''} onSave={(v) => handleItemUpdate(edu.id!, 'education.degree', v)} /></div>
+                          <div className="text-sm text-muted-foreground"><EditableField value={edu.degree || ''} onSave={(v) => handleItemUpdate(edu.id!, 'education', 'degree', v)} /></div>
                         </div>
                       </SortableItem>
                     ))}
                   </div>
                 </SortableContext>
               </DndContext>
-            </Section>
+            </DraggableSection>
           );
         case 'skills':
             return skills && skills.length > 0 && (
-            <Section key={sectionId} section={sectionData} resume={resume} onUpdate={onUpdate}>
+            <DraggableSection key={sectionId} section={sectionData} resume={resume} onUpdate={onUpdate}>
               <div className="flex flex-wrap gap-2">
                 {skills.map((skill, index) => (
                   <div key={`${skill}-${index}`} className="bg-secondary text-secondary-foreground rounded-full px-3 py-1 text-sm">
@@ -289,7 +282,7 @@ export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpda
                   </div>
                 ))}
               </div>
-            </Section>
+            </DraggableSection>
           );
         default:
             return null;
@@ -322,7 +315,7 @@ export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpda
         {/* Main Content */}
         <main className="grid grid-cols-1 gap-10">
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSectionDragEnd}>
-            <SortableContext items={sections} strategy={verticalListSortingStrategy}>
+            <SortableContext items={sections.map(s => s.id)} strategy={verticalListSortingStrategy}>
               {sectionOrder.map(sectionId => renderSection(sectionId))}
             </SortableContext>
           </DndContext>

@@ -14,6 +14,9 @@ export interface ResumeData extends ParseExistingResumeOutput {
   sections: Section[];
   theme: {
     primaryColor: string;
+    accentColor: string;
+    textColor: string;
+    mutedTextColor: string;
   };
 }
 

@@ -13,7 +13,7 @@ import {
   BarChart,
   ClipboardCheck,
   Star,
-  Palette,
+  Settings,
 } from 'lucide-react';
 
 import {
@@ -86,16 +86,12 @@ const resumeSchema = z.object({
   })).optional(),
   theme: z.object({
     primaryColor: z.string(),
+    accentColor: z.string(),
+    textColor: z.string(),
+    mutedTextColor: z.string(),
   }).optional(),
 });
 
-const colorOptions = [
-  { name: 'Default Blue', value: '210 86% 53%' },
-  { name: 'Forest Green', value: '158 64% 35%' },
-  { name: 'Charcoal Gray', value: '220 9% 46%' },
-  { name: 'Royal Purple', value: '260 52% 47%' },
-  { name: 'Crimson Red', value: '348 83% 47%' },
-];
 
 export function ControlPanel({
   resumeData,
@@ -178,30 +174,12 @@ export function ControlPanel({
       <AccordionItem value="customize">
         <AccordionTrigger className="text-lg font-semibold">
           <div className="flex items-center gap-3">
-            <Palette className="h-5 w-5" /> Customize
+            <Settings className="h-5 w-5" /> Customize
           </div>
         </AccordionTrigger>
         <AccordionContent className="pt-2">
            <Form {...form}>
             <form onBlur={handleBlur} className="space-y-6">
-              <Card>
-                <CardHeader><CardTitle>Theme Color</CardTitle></CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-5 gap-2">
-                    {colorOptions.map(color => (
-                      <Button
-                        key={color.name}
-                        type="button"
-                        variant={resumeData.theme.primaryColor === color.value ? 'default' : 'outline'}
-                        className="h-12 w-12 rounded-full p-0 border-2"
-                        style={{ backgroundColor: `hsl(${color.value})`}}
-                        onClick={() => onResumeUpdate({ theme: { primaryColor: color.value } })}
-                        title={color.name}
-                      />
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
               <Card>
                 <CardHeader><CardTitle>Section Titles</CardTitle></CardHeader>
                 <CardContent className="space-y-4">

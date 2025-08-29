@@ -2,6 +2,18 @@
 
 import { useCallback, useState, useEffect } from 'react';
 import { produce } from 'immer';
+import {
+  FileText,
+  Trash2,
+  PlusCircle,
+  Loader2,
+  Wand2,
+  BarChart,
+  ClipboardCheck,
+  Star,
+  Palette,
+  Printer,
+} from 'lucide-react';
 
 import { parseExistingResume } from '@/ai/flows/parse-existing-resume';
 import { scoreSkills } from '@/ai/flows/score-skills-based-on-relevance';
@@ -18,8 +30,14 @@ import { ResumePreview } from '@/components/resume-preview';
 import { ControlPanel } from '@/components/control-panel';
 import { Logo } from '@/components/logo';
 import { Button } from '@/components/ui/button';
-import { Printer } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 
 const initialResume: ResumeData = {
   name: 'Alex Doe',
@@ -28,12 +46,14 @@ const initialResume: ResumeData = {
   summary: 'Innovative and deadline-driven Software Engineer with 5+ years of experience designing and developing user-centered digital products from initial concept to final, polished deliverable.',
   experience: [
     {
+      id: 'exp1',
       title: 'Senior Software Engineer',
       company: 'Tech Solutions Inc.',
       dates: '2020 - Present',
       description: 'Lead development of a new microservices-based architecture, improving system scalability by 40%.',
     },
     {
+      id: 'exp2',
       title: 'Software Engineer',
       company: 'Innovate LLC',
       dates: '2018 - 2020',
@@ -42,6 +62,7 @@ const initialResume: ResumeData = {
   ],
   education: [
     {
+      id: 'edu1',
       institution: 'State University',
       degree: 'B.S. in Computer Science',
       dates: '2014 - 2018',
@@ -50,12 +71,14 @@ const initialResume: ResumeData = {
   skills: ['React', 'TypeScript', 'Node.js', 'Python', 'AWS', 'Docker', 'SQL'],
   projects: [
     {
+      id: 'proj1',
       name: 'E-commerce Search Platform',
       description: 'Built a high-performance search engine for an e-commerce site using Elasticsearch, resulting in a 30% increase in conversion rates.',
       dates: '2022',
       url: 'project-search.example.com',
     },
     {
+      id: 'proj2',
       name: 'Data Visualization Dashboard',
       description: 'Designed and developed a real-time data visualization dashboard with D3.js and React.',
       dates: '2021',
@@ -71,6 +94,9 @@ const initialResume: ResumeData = {
   ],
   theme: {
     primaryColor: '210 86% 53%',
+    accentColor: '180 55% 46%',
+    textColor: '210 10% 23%',
+    mutedTextColor: '210 20% 45%',
   },
 };
 
@@ -84,7 +110,10 @@ export default function Home() {
 
   useEffect(() => {
     document.documentElement.style.setProperty('--primary', resumeData.theme.primaryColor);
-  }, [resumeData.theme.primaryColor]);
+    document.documentElement.style.setProperty('--accent', resumeData.theme.accentColor);
+    document.documentElement.style.setProperty('--foreground', resumeData.theme.textColor);
+    document.documentElement.style.setProperty('--muted-foreground', resumeData.theme.mutedTextColor);
+  }, [resumeData.theme]);
 
   const handleResumeUpdate = useCallback((newData: Partial<ResumeData>) => {
     setResumeData(produce(draft => {
@@ -99,7 +128,6 @@ export default function Home() {
       
       setResumeData(produce(draft => {
         Object.assign(draft, parsedData);
-        // Ensure sections and theme are not overwritten
         if (!draft.sections) draft.sections = initialResume.sections;
         if (!draft.theme) draft.theme = initialResume.theme;
       }));
@@ -185,14 +213,78 @@ export default function Home() {
     }
   };
 
+  const handleThemeChange = (colorType: keyof ResumeData['theme'], value: string) => {
+    handleResumeUpdate({
+      theme: { ...resumeData.theme, [colorType]: value }
+    });
+  };
+
   return (
     <div className="flex h-screen w-full flex-col bg-background">
       <header className="flex h-16 items-center justify-between border-b px-4 lg:px-6 no-print">
         <Logo />
-        <Button variant="outline" onClick={() => window.print()}>
-          <Printer className="mr-2 h-4 w-4" />
-          Print / Export PDF
-        </Button>
+        <div className="flex items-center gap-2">
+           <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline">
+                <Palette className="mr-2 h-4 w-4" />
+                Theme
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80">
+              <div className="grid gap-4">
+                <div className="space-y-2">
+                  <h4 className="font-medium leading-none">Customize Theme</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Adjust the colors of your resume.
+                  </p>
+                </div>
+                <div className="grid gap-2">
+                  <div className="grid grid-cols-3 items-center gap-4">
+                    <Label htmlFor="primaryColor">Primary</Label>
+                    <Input
+                      id="primaryColor"
+                      value={resumeData.theme.primaryColor}
+                      onChange={(e) => handleThemeChange('primaryColor', e.target.value)}
+                      className="col-span-2 h-8"
+                    />
+                  </div>
+                  <div className="grid grid-cols-3 items-center gap-4">
+                    <Label htmlFor="accentColor">Accent</Label>
+                    <Input
+                      id="accentColor"
+                      value={resumeData.theme.accentColor}
+                      onChange={(e) => handleThemeChange('accentColor', e.target.value)}
+                      className="col-span-2 h-8"
+                    />
+                  </div>
+                   <div className="grid grid-cols-3 items-center gap-4">
+                    <Label htmlFor="textColor">Text</Label>
+                    <Input
+                      id="textColor"
+                      value={resumeData.theme.textColor}
+                      onChange={(e) => handleThemeChange('textColor', e.target.value)}
+                      className="col-span-2 h-8"
+                    />
+                  </div>
+                   <div className="grid grid-cols-3 items-center gap-4">
+                    <Label htmlFor="mutedTextColor">Muted Text</Label>
+                    <Input
+                      id="mutedTextColor"
+                      value={resumeData.theme.mutedTextColor}
+                      onChange={(e) => handleThemeChange('mutedTextColor', e.target.value)}
+                      className="col-span-2 h-8"
+                    />
+                  </div>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+          <Button variant="outline" onClick={() => window.print()}>
+            <Printer className="mr-2 h-4 w-4" />
+            Print / Export PDF
+          </Button>
+        </div>
       </header>
       <main className="flex flex-1 overflow-hidden">
         <aside className="w-full max-w-md border-r no-print xl:max-w-lg">
