@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCallback, useState, useEffect } from 'react';
@@ -115,6 +116,7 @@ export default function Home() {
     useState<ContentEvaluation | null>(null);
   const [analyzedResumeContent, setAnalyzedResumeContent] = useState<string | null>(null);
   const [isAnalysisDialogOpen, setIsAnalysisDialogOpen] = useState(false);
+  const [fixesApplied, setFixesApplied] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -136,6 +138,7 @@ export default function Home() {
     setResumeData(produce(draft => {
       Object.assign(draft, newData);
     }));
+    setFixesApplied(false); // Reset on any manual change
   }, []);
 
   const handleParseResume = async (text: string) => {
@@ -154,6 +157,7 @@ export default function Home() {
         if (!draft.theme) draft.theme = initialResume.theme;
       }));
 
+      setFixesApplied(false);
       toast({
         title: 'Resume Parsed',
         description: 'Your resume has been successfully imported.',
@@ -222,6 +226,7 @@ export default function Home() {
 
     setLoading('analyze');
     setContentEvaluation(null);
+    setFixesApplied(false);
     try {
       const evaluation = await evaluateResumeContent({ resumeContent });
       setContentEvaluation(evaluation);
@@ -261,6 +266,7 @@ export default function Home() {
         if (draft.projects) draft.projects.forEach(item => { if (!item.id) item.id = crypto.randomUUID(); });
       }));
       
+      setFixesApplied(true);
       // Mark content as analyzed to prevent re-running immediately
       setAnalyzedResumeContent(JSON.stringify(updatedResume));
       // Close the dialog and show success
@@ -377,17 +383,21 @@ export default function Home() {
           )}
           <DialogFooter>
             <Button variant="ghost" onClick={() => setIsAnalysisDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleApplyFixes} disabled={loading === 'apply-fixes'}>
-              {loading === 'apply-fixes' ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Check className="mr-2 h-4 w-4" />
-              )}
-              Apply Fixes
-            </Button>
+            {!fixesApplied && (
+              <Button onClick={handleApplyFixes} disabled={loading === 'apply-fixes'}>
+                {loading === 'apply-fixes' ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Check className="mr-2 h-4 w-4" />
+                )}
+                Apply Fixes
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   );
 }
+
+    
