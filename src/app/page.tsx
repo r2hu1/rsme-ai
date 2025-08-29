@@ -101,14 +101,14 @@ const initialResume: ResumeData = {
     { id: 'skills', type: 'skills', title: 'Skills', enabled: true },
   ],
   theme: {
-    headingColor: 'hsl(210 10% 23%)',
-    sectionTitleColor: 'hsl(210 86% 53%)',
-    itemTitleColor: 'hsl(210 86% 53%)',
-    secondaryColor: 'hsl(210 10% 23%)',
-    linkColor: 'hsl(210 86% 53%)',
-    itemDescriptionColor: 'hsl(210 20% 45%)',
-    borderColor: 'hsl(210 86% 53%)',
-    borderWidth: 2,
+    headingColor: 'hsl(210 10% 23%)', // Dark Slate Gray
+    sectionTitleColor: 'hsl(210 86% 53%)', // Primary Blue
+    itemTitleColor: 'hsl(210 10% 23%)', // Dark Slate Gray
+    secondaryColor: 'hsl(210 10% 45%)', // Medium Gray
+    linkColor: 'hsl(210 86% 53%)', // Primary Blue
+    itemDescriptionColor: 'hsl(210 20% 35%)', // Darker Gray
+    borderColor: 'hsl(210 20% 88%)', // Light Gray
+    borderWidth: 1,
   },
 };
 
