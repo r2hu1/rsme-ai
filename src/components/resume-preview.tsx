@@ -1,11 +1,22 @@
 'use client';
 
+import React from 'react';
 import type { ResumeData } from '@/lib/types';
 import { Mail, Phone, User, Briefcase, GraduationCap, Wrench, Sparkles, FolderGit2, Link } from 'lucide-react';
 
 const EditableField = ({ value, onSave, multiline = false }: { value: string; onSave: (newValue: string) => void; multiline?: boolean }) => {
-  const handleBlur = (e: React.FocusEvent<HTMLDivElement>) => {
-    onSave(e.currentTarget.innerText);
+  const fieldRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (fieldRef.current && fieldRef.current.innerHTML !== value) {
+      fieldRef.current.innerHTML = value;
+    }
+  }, [value]);
+
+  const handleBlur = () => {
+    if (fieldRef.current) {
+      onSave(fieldRef.current.innerHTML);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -17,6 +28,7 @@ const EditableField = ({ value, onSave, multiline = false }: { value: string; on
 
   return (
     <div
+      ref={fieldRef}
       contentEditable
       suppressContentEditableWarning
       onBlur={handleBlur}
@@ -33,7 +45,7 @@ export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpda
   const handleUpdate = (path: string, value: any) => {
     const keys = path.split('.');
     const newResumeData = JSON.parse(JSON.stringify(resume));
-    let current = newResumeData;
+    let current: any = newResumeData;
     for (let i = 0; i < keys.length - 1; i++) {
       current = current[keys[i]];
     }
@@ -85,7 +97,7 @@ export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpda
               </h2>
               <div className="space-y-6">
                 {experience.map((exp, index) => (
-                  <div key={index} className="space-y-1">
+                  <div key={`${exp.title}-${index}`} className="space-y-1">
                     <div className="flex justify-between items-baseline">
                       <h3 className="font-semibold"><EditableField value={exp.title || ''} onSave={(v) => handleUpdate(`experience.${index}.title`, v)} /></h3>
                       <p className="text-xs text-muted-foreground"><EditableField value={exp.dates || ''} onSave={(v) => handleUpdate(`experience.${index}.dates`, v)} /></p>
@@ -107,7 +119,7 @@ export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpda
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {projects.map((project, index) => (
-                  <div key={index} className="space-y-1 break-inside-avoid">
+                  <div key={`${project.name}-${index}`} className="space-y-1 break-inside-avoid">
                     <div className="flex justify-between items-baseline">
                       <h3 className="font-semibold"><EditableField value={project.name || ''} onSave={(v) => handleUpdate(`projects.${index}.name`, v)} /></h3>
                       <p className="text-xs text-muted-foreground"><EditableField value={project.dates || ''} onSave={(v) => handleUpdate(`projects.${index}.dates`, v)} /></p>
@@ -134,7 +146,7 @@ export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpda
               </h2>
               <div className="space-y-4">
                 {education.map((edu, index) => (
-                  <div key={index}>
+                  <div key={`${edu.institution}-${index}`}>
                     <div className="flex justify-between items-baseline">
                       <h3 className="font-semibold"><EditableField value={edu.institution || ''} onSave={(v) => handleUpdate(`education.${index}.institution`, v)} /></h3>
                       <p className="text-xs text-muted-foreground"><EditableField value={edu.dates || ''} onSave={(v) => handleUpdate(`education.${index}.dates`, v)} /></p>
@@ -155,7 +167,7 @@ export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpda
               </h2>
               <div className="flex flex-wrap gap-2">
                 {skills.map((skill, index) => (
-                  <div key={index} className="bg-secondary text-secondary-foreground rounded-full px-3 py-1 text-sm">
+                  <div key={`${skill}-${index}`} className="bg-secondary text-secondary-foreground rounded-full px-3 py-1 text-sm">
                     <EditableField value={skill} onSave={(v) => handleUpdate(`skills.${index}`, v)} />
                   </div>
                 ))}
