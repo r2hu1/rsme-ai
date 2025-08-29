@@ -15,6 +15,7 @@ import {
   Star,
   Settings,
 } from 'lucide-react';
+import { produce } from 'immer';
 
 import {
   Accordion,
@@ -59,21 +60,21 @@ const resumeSchema = z.object({
   phone: z.string().optional(),
   summary: z.string().optional(),
   experience: z.array(z.object({
-    id: z.string().optional(),
+    id: z.string(),
     title: z.string().optional(),
     company: z.string().optional(),
     dates: z.string().optional(),
     description: z.string().optional(),
   })).optional(),
   education: z.array(z.object({
-    id: z.string().optional(),
+    id: z.string(),
     institution: z.string().optional(),
     degree: z.string().optional(),
     dates: z.string().optional(),
   })).optional(),
   skills: z.array(z.string()).optional(),
   projects: z.array(z.object({
-    id: z.string().optional(),
+    id: z.string(),
     name: z.string().optional(),
     description: z.string().optional(),
     dates: z.string().optional(),
@@ -81,15 +82,17 @@ const resumeSchema = z.object({
   })).optional(),
   sections: z.array(z.object({
     id: z.string(),
+    type: z.enum(['summary', 'experience', 'projects', 'education', 'skills', 'custom']),
     title: z.string(),
     enabled: z.boolean(),
-  })).optional(),
+    content: z.string().optional(),
+  })),
   theme: z.object({
     primaryColor: z.string(),
     accentColor: z.string(),
     textColor: z.string(),
     mutedTextColor: z.string(),
-  }).optional(),
+  }),
 });
 
 
@@ -139,6 +142,18 @@ export function ControlPanel({
   const handleBlur = () => {
     form.handleSubmit(d => onResumeUpdate(d))();
   };
+  
+  const addCustomSection = () => {
+    const newSection = {
+        id: crypto.randomUUID(),
+        type: 'custom' as const,
+        title: 'New Section',
+        enabled: true,
+        content: 'This is a new custom section. Click to edit!'
+    };
+    onResumeUpdate({ sections: [...resumeData.sections, newSection] });
+  };
+
 
   return (
     <Accordion type="multiple" defaultValue={['import', 'content', 'customize']} className="w-full">
@@ -178,28 +193,47 @@ export function ControlPanel({
           </div>
         </AccordionTrigger>
         <AccordionContent className="pt-2">
-           <Form {...form}>
-            <form onBlur={handleBlur} className="space-y-6">
-              <Card>
-                <CardHeader><CardTitle>Section Titles</CardTitle></CardHeader>
-                <CardContent className="space-y-4">
-                  {resumeData.sections.map((section, index) => (
-                    <FormField
-                      key={section.id}
-                      control={form.control}
-                      name={`sections.${index}.title`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{section.id.charAt(0).toUpperCase() + section.id.slice(1)}</FormLabel>
-                          <FormControl><Input {...field} /></FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  ))}
+           <Card>
+                <CardHeader><CardTitle>Sections</CardTitle></CardHeader>
+                <CardContent className="space-y-2">
+                    <p className="text-sm text-muted-foreground">Toggle sections on or off.</p>
+                    <Form {...form}>
+                        <form onBlur={handleBlur} className="space-y-4">
+                             {resumeData.sections.map((section, index) => (
+                                <FormField
+                                key={section.id}
+                                control={form.control}
+                                name={`sections.${index}.enabled`}
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                                    <div className="space-y-0.5">
+                                        <FormLabel>{resumeData.sections[index].title}</FormLabel>
+                                    </div>
+                                    <FormControl>
+                                        <Controller
+                                            name={`sections.${index}.enabled`}
+                                            control={form.control}
+                                            render={({ field: { onChange, value } }) => (
+                                                <Input
+                                                type="checkbox"
+                                                className="h-4 w-4"
+                                                checked={value}
+                                                onChange={onChange}
+                                                />
+                                            )}
+                                        />
+                                    </FormControl>
+                                    </FormItem>
+                                )}
+                                />
+                            ))}
+                        </form>
+                    </Form>
+                    <Button onClick={addCustomSection} className="w-full mt-4">
+                        <PlusCircle className="mr-2 h-4 w-4" /> Add Custom Section
+                    </Button>
                 </CardContent>
-              </Card>
-            </form>
-          </Form>
+            </Card>
         </AccordionContent>
       </AccordionItem>
       
@@ -279,7 +313,7 @@ export function ControlPanel({
               </Card>
 
               <Card>
-                <CardHeader><CardTitle className="flex justify-between items-center"><span>Skills</span><Button type="button" size="sm" variant="ghost" onClick={() => appendSkill("")}><PlusCircle className="mr-2 h-4 w-4" />Add</Button></CardTitle></CardHeader>
+                <CardHeader><CardTitle className="flex justify-between items-center"><span>Skills</span><Button type="button" size="sm" variant="ghost" onClick={() => appendSkill("")}><PlusCircle className="mr-2 h-4 w-4" />Add</Button></CardTitle></Header>
                 <CardContent>
                   <div className="flex flex-wrap gap-2">
                   {skillFields.map((field, index) => (

@@ -71,29 +71,49 @@
 }
 
 @media print {
-  body {
-    background-color: #fff;
+  @page {
+    size: A4;
+    margin: 0;
   }
+  
+  html, body {
+    width: 210mm;
+    height: 297mm;
+    background-color: #fff;
+    -webkit-print-color-adjust: exact;
+  }
+
   body * {
     visibility: hidden;
   }
-  #resume-preview, #resume-preview * {
-    visibility: visible;
+
+  .no-print, .no-print * {
+    display: none !important;
   }
-  #resume-preview {
-    position: fixed;
+  
+  .print-container, .print-container * {
+      visibility: visible;
+  }
+
+  .print-container {
+    position: absolute;
     left: 0;
     top: 0;
+    margin: 0;
+    padding: 0;
     width: 100%;
-    height: 100%;
+  }
+
+  #resume-preview {
+    visibility: visible;
+    position: static;
+    width: 100%;
+    height: auto;
     margin: 0;
     padding: 2rem;
     border: none;
     box-shadow: none;
     transform: scale(1);
-    -webkit-print-color-adjust: exact;
-  }
-  .no-print {
-    display: none !important;
+    overflow: visible;
   }
 }

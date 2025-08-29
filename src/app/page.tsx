@@ -86,17 +86,17 @@ const initialResume: ResumeData = {
     },
   ],
   sections: [
-    { id: 'summary', title: 'Professional Summary', enabled: true },
-    { id: 'experience', title: 'Work Experience', enabled: true },
-    { id: 'projects', title: 'Projects', enabled: true },
-    { id: 'education', title: 'Education', enabled: true },
-    { id: 'skills', title: 'Skills', enabled: true },
+    { id: 'summary', type: 'summary', title: 'Professional Summary', enabled: true },
+    { id: 'experience', type: 'experience', title: 'Work Experience', enabled: true },
+    { id: 'projects', type: 'projects', title: 'Projects', enabled: true },
+    { id: 'education', type: 'education', title: 'Education', enabled: true },
+    { id: 'skills', type: 'skills', title: 'Skills', enabled: true },
   ],
   theme: {
-    primaryColor: '210 86% 53%',
-    accentColor: '180 55% 46%',
-    textColor: '210 10% 23%',
-    mutedTextColor: '210 20% 45%',
+    primaryColor: 'hsl(210 86% 53%)',
+    accentColor: 'hsl(180 55% 46%)',
+    textColor: 'hsl(210 10% 23%)',
+    mutedTextColor: 'hsl(210 20% 45%)',
   },
 };
 
@@ -109,10 +109,18 @@ export default function Home() {
   const { toast } = useToast();
 
   useEffect(() => {
-    document.documentElement.style.setProperty('--primary', resumeData.theme.primaryColor);
-    document.documentElement.style.setProperty('--accent', resumeData.theme.accentColor);
-    document.documentElement.style.setProperty('--foreground', resumeData.theme.textColor);
-    document.documentElement.style.setProperty('--muted-foreground', resumeData.theme.mutedTextColor);
+    // This function converts HSL string to just the numbers for the CSS variables
+    const setCssVar = (name: string, value: string) => {
+      const hslValues = value.match(/(\d+\s*%?\s*){3}/)?.[0];
+      if (hslValues) {
+        document.documentElement.style.setProperty(name, hslValues);
+      }
+    };
+    
+    setCssVar('--primary', resumeData.theme.primaryColor);
+    setCssVar('--accent', resumeData.theme.accentColor);
+    setCssVar('--foreground', resumeData.theme.textColor);
+    setCssVar('--muted-foreground', resumeData.theme.mutedTextColor);
   }, [resumeData.theme]);
 
   const handleResumeUpdate = useCallback((newData: Partial<ResumeData>) => {
@@ -128,7 +136,12 @@ export default function Home() {
       
       setResumeData(produce(draft => {
         Object.assign(draft, parsedData);
-        if (!draft.sections) draft.sections = initialResume.sections;
+        // Ensure standard sections are present and typed correctly after parsing
+        draft.sections = initialResume.sections.map(s => {
+          const existingSection = draft.sections?.find(ds => ds.id === s.id);
+          return existingSection ? { ...s, ...existingSection } : s;
+        });
+
         if (!draft.theme) draft.theme = initialResume.theme;
       }));
 
@@ -218,6 +231,70 @@ export default function Home() {
       theme: { ...resumeData.theme, [colorType]: value }
     });
   };
+  
+  const hexToHsl = (hex: string): string => {
+    let r = 0, g = 0, b = 0;
+    if (hex.length === 4) {
+      r = parseInt(hex[1] + hex[1], 16);
+      g = parseInt(hex[2] + hex[2], 16);
+      b = parseInt(hex[3] + hex[3], 16);
+    } else if (hex.length === 7) {
+      r = parseInt(hex.slice(1, 3), 16);
+      g = parseInt(hex.slice(3, 5), 16);
+      b = parseInt(hex.slice(5, 7), 16);
+    }
+    r /= 255; g /= 255; b /= 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h = 0, s = 0, l = (max + min) / 2;
+
+    if (max !== min) {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+        case g: h = (b - r) / d + 2; break;
+        case b: h = (r - g) / d + 4; break;
+      }
+      h /= 6;
+    }
+
+    h = Math.round(h * 360);
+    s = Math.round(s * 100);
+    l = Math.round(l * 100);
+    
+    return `hsl(${h} ${s}% ${l}%)`;
+  }
+  
+  const hslToHex = (hsl: string): string => {
+    const hslValues = hsl.match(/(\d+)/g);
+    if (!hslValues || hslValues.length < 3) return '#000000';
+
+    let h = parseInt(hslValues[0]);
+    let s = parseInt(hslValues[1]);
+    let l = parseInt(hslValues[2]);
+
+    s /= 100;
+    l /= 100;
+
+    const c = (1 - Math.abs(2 * l - 1)) * s;
+    const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+    const m = l - c/2;
+    let r = 0, g = 0, b = 0;
+
+    if (h >= 0 && h < 60) { [r, g, b] = [c, x, 0]; } 
+    else if (h >= 60 && h < 120) { [r, g, b] = [x, c, 0]; } 
+    else if (h >= 120 && h < 180) { [r, g, b] = [0, c, x]; }
+    else if (h >= 180 && h < 240) { [r, g, b] = [0, x, c]; }
+    else if (h >= 240 && h < 300) { [r, g, b] = [x, 0, c]; }
+    else if (h >= 300 && h < 360) { [r, g, b] = [c, 0, x]; }
+    
+    r = Math.round((r + m) * 255);
+    g = Math.round((g + m) * 255);
+    b = Math.round((b + m) * 255);
+
+    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+  }
+
 
   return (
     <div className="flex h-screen w-full flex-col bg-background">
@@ -240,42 +317,18 @@ export default function Home() {
                   </p>
                 </div>
                 <div className="grid gap-2">
-                  <div className="grid grid-cols-3 items-center gap-4">
-                    <Label htmlFor="primaryColor">Primary</Label>
-                    <Input
-                      id="primaryColor"
-                      value={resumeData.theme.primaryColor}
-                      onChange={(e) => handleThemeChange('primaryColor', e.target.value)}
-                      className="col-span-2 h-8"
-                    />
-                  </div>
-                  <div className="grid grid-cols-3 items-center gap-4">
-                    <Label htmlFor="accentColor">Accent</Label>
-                    <Input
-                      id="accentColor"
-                      value={resumeData.theme.accentColor}
-                      onChange={(e) => handleThemeChange('accentColor', e.target.value)}
-                      className="col-span-2 h-8"
-                    />
-                  </div>
-                   <div className="grid grid-cols-3 items-center gap-4">
-                    <Label htmlFor="textColor">Text</Label>
-                    <Input
-                      id="textColor"
-                      value={resumeData.theme.textColor}
-                      onChange={(e) => handleThemeChange('textColor', e.target.value)}
-                      className="col-span-2 h-8"
-                    />
-                  </div>
-                   <div className="grid grid-cols-3 items-center gap-4">
-                    <Label htmlFor="mutedTextColor">Muted Text</Label>
-                    <Input
-                      id="mutedTextColor"
-                      value={resumeData.theme.mutedTextColor}
-                      onChange={(e) => handleThemeChange('mutedTextColor', e.target.value)}
-                      className="col-span-2 h-8"
-                    />
-                  </div>
+                  {(Object.keys(resumeData.theme) as (keyof ResumeData['theme'])[]).map(key => (
+                     <div key={key} className="grid grid-cols-3 items-center gap-4">
+                      <Label htmlFor={key} className="capitalize">{key.replace('Color', '')}</Label>
+                      <Input
+                        id={key}
+                        type="color"
+                        value={hslToHex(resumeData.theme[key])}
+                        onChange={(e) => handleThemeChange(key, hexToHsl(e.target.value))}
+                        className="col-span-2 h-8 p-1"
+                      />
+                    </div>
+                  ))}
                 </div>
               </div>
             </PopoverContent>
@@ -304,10 +357,12 @@ export default function Home() {
           </ScrollArea>
         </aside>
 
-        <section className="flex-1 overflow-y-auto bg-muted/30 p-4 lg:p-8">
+        <section className="flex-1 overflow-y-auto bg-muted/30 p-4 lg:p-8 print-container">
           <ResumePreview resume={resumeData} onUpdate={handleResumeUpdate} />
         </section>
       </main>
     </div>
   );
 }
+
+    

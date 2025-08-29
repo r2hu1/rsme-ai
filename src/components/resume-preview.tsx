@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useRef, useMemo, useState } from 'react';
-import type { ResumeData, Experience, Education, Project, SectionType, Section as SectionData } from '@/lib/types';
-import { Mail, Phone, Link, GripVertical, Sparkles } from 'lucide-react';
+import React, { useRef, useMemo } from 'react';
+import type { ResumeData, Section as SectionData, SectionType } from '@/lib/types';
+import { Mail, Phone, Link, GripVertical, Sparkles, Trash2 } from 'lucide-react';
 import { produce } from 'immer';
 import {
   DndContext,
@@ -11,8 +11,6 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
-  DragOverlay,
-  Active
 } from '@dnd-kit/core';
 import {
   arrayMove,
@@ -22,7 +20,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/lib/utils';
-
+import { Button } from './ui/button';
 
 const EditableField = ({ value, onSave, multiline = false, as: Component = 'div', className }: { value: string; onSave: (newValue: string) => void; multiline?: boolean, as?: React.ElementType, className?: string }) => {
   const fieldRef = useRef<HTMLElement>(null);
@@ -45,7 +43,7 @@ const EditableField = ({ value, onSave, multiline = false, as: Component = 'div'
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Enter' && !multiline) {
       e.preventDefault();
-      e.currentTarget.blur();
+      (e.target as HTMLElement).blur();
     }
   };
 
@@ -82,7 +80,7 @@ function SortableItem({ id, children }: { id: string, children: React.ReactNode 
   return (
     <div ref={setNodeRef} style={style} className="relative group/item">
       {children}
-      <button {...attributes} {...listeners} className="absolute -left-6 top-1/2 -translate-y-1/2 p-1 text-muted-foreground opacity-0 group-hover/item:opacity-100 focus:opacity-100 transition-opacity cursor-grab active:cursor-grabbing">
+      <button {...attributes} {...listeners} className="absolute -left-6 top-1/2 -translate-y-1/2 p-1 text-muted-foreground opacity-0 group-hover/item:opacity-100 focus:opacity-100 transition-opacity cursor-grab active:cursor-grabbing no-print">
         <GripVertical className="h-4 w-4" />
       </button>
     </div>
@@ -113,6 +111,11 @@ const DraggableSection = ({ section, resume, onUpdate, children }: { section: Se
     });
     onUpdate({ sections: updatedSections });
   };
+  
+  const removeSection = () => {
+    const updatedSections = resume.sections.filter(s => s.id !== section.id);
+    onUpdate({ sections: updatedSections });
+  }
 
   return (
      <section ref={setNodeRef} style={style} className="relative group/section">
@@ -120,9 +123,16 @@ const DraggableSection = ({ section, resume, onUpdate, children }: { section: Se
           className="flex items-center gap-3 text-lg font-semibold font-headline border-b-2 border-primary pb-2 mb-4"
         >
           <EditableField value={section.title} onSave={handleTitleUpdate} as="h2" className="flex-grow" />
-          <button {...attributes} {...listeners} className="p-1 text-muted-foreground opacity-0 group-hover/section:opacity-100 focus:opacity-100 transition-opacity cursor-grab active:cursor-grabbing">
-            <GripVertical className="h-5 w-5" />
-          </button>
+           <div className="flex items-center gap-1 no-print">
+            {section.type === 'custom' && (
+              <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover/section:opacity-100" onClick={removeSection}>
+                <Trash2 className="h-4 w-4 text-destructive"/>
+              </Button>
+            )}
+            <button {...attributes} {...listeners} className="p-1 text-muted-foreground opacity-0 group-hover/section:opacity-100 focus:opacity-100 transition-opacity cursor-grab active:cursor-grabbing">
+                <GripVertical className="h-5 w-5" />
+            </button>
+           </div>
         </div>
       {children}
     </section>
@@ -143,7 +153,7 @@ export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpda
     }));
   };
 
-  const handleItemUpdate = (itemId: string, sectionType: SectionType, field: string, value: any) => {
+  const handleItemUpdate = (itemId: string, sectionType: keyof ResumeData, field: string, value: any) => {
      onUpdate(produce(resume, draft => {
         const items = draft[sectionType] as any[];
         if (items && Array.isArray(items)) {
@@ -153,6 +163,15 @@ export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpda
             }
         }
     }));
+  }
+  
+  const handleSectionContentUpdate = (sectionId: string, value: string) => {
+     onUpdate(produce(resume, draft => {
+        const section = draft.sections.find(s => s.id === sectionId);
+        if (section) {
+            section.content = value;
+        }
+     }));
   }
   
   const sensors = useSensors(
@@ -167,32 +186,34 @@ export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpda
 
   function handleSectionDragEnd(event: DragEndEvent) {
     const { active, over } = event;
-    if (active.id !== over?.id) {
-      const oldIndex = sectionOrder.indexOf(active.id as SectionType);
-      const newIndex = sectionOrder.indexOf(over!.id as SectionType);
+    if (over && active.id !== over.id) {
+      const oldIndex = sectionOrder.indexOf(active.id as string);
+      const newIndex = sectionOrder.indexOf(over.id as string);
       const newSections = arrayMove(sections, oldIndex, newIndex);
       onUpdate({ sections: newSections });
     }
   }
 
-  function handleItemDragEnd(event: DragEndEvent, sectionType: SectionType) {
+  function handleItemDragEnd(event: DragEndEvent, sectionType: 'experience' | 'education' | 'projects') {
     const { active, over } = event;
-    if (active.id !== over?.id) {
+    if (over && active.id !== over.id) {
       const items = resume[sectionType] as any[];
       if(items && Array.isArray(items)) {
         const oldIndex = items.findIndex(item => item.id === active.id);
-        const newIndex = items.findIndex(item => item.id === over!.id);
-        const newItems = arrayMove(items, oldIndex, newIndex);
-        onUpdate({ [sectionType]: newItems });
+        const newIndex = items.findIndex(item => item.id === over.id);
+        if (oldIndex !== -1 && newIndex !== -1) {
+            const newItems = arrayMove(items, oldIndex, newIndex);
+            onUpdate({ [sectionType]: newItems });
+        }
       }
     }
   }
 
-  const renderSection = (sectionId: SectionType) => {
+  const renderSection = (sectionId: string) => {
     const sectionData = sections.find(s => s.id === sectionId);
     if (!sectionData || !sectionData.enabled) return null;
     
-    switch(sectionId) {
+    switch(sectionData.type) {
         case 'summary':
             return summary != null && (
             <DraggableSection key={sectionId} section={sectionData} resume={resume} onUpdate={onUpdate}>
@@ -284,6 +305,14 @@ export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpda
               </div>
             </DraggableSection>
           );
+        case 'custom':
+          return (
+            <DraggableSection key={sectionId} section={sectionData} resume={resume} onUpdate={onUpdate}>
+              <div className="text-sm leading-relaxed">
+                  <EditableField value={sectionData.content || ''} onSave={(v) => handleSectionContentUpdate(sectionData.id, v)} multiline />
+              </div>
+            </DraggableSection>
+          )
         default:
             return null;
     }
@@ -295,7 +324,7 @@ export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpda
       <div className="flex flex-col gap-8">
         {/* Header */}
         <header className="text-center border-b pb-6">
-          {name != null && <h1 className="text-4xl font-bold font-headline tracking-tight"><EditableField value={name} onSave={(v) => handleUpdate('name', v)} as="div" /></h1>}
+          {name != null && <h1 className="text-4xl font-bold font-headline tracking-tight"><EditableField value={name} onSave={(v) => handleUpdate('name', v)} as="h1" /></h1>}
           <div className="flex justify-center items-center gap-6 mt-3 text-sm text-muted-foreground">
             {email != null && (
               <div className="flex items-center gap-2 hover:text-primary transition-colors">
@@ -315,7 +344,7 @@ export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpda
         {/* Main Content */}
         <main className="grid grid-cols-1 gap-10">
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSectionDragEnd}>
-            <SortableContext items={sections.map(s => s.id)} strategy={verticalListSortingStrategy}>
+            <SortableContext items={sectionOrder} strategy={verticalListSortingStrategy}>
               {sectionOrder.map(sectionId => renderSection(sectionId))}
             </SortableContext>
           </DndContext>
