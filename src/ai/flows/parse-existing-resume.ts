@@ -26,6 +26,7 @@ const ParseExistingResumeOutputSchema = z.object({
   experience: z
     .array(
       z.object({
+        id: z.string().default(() => crypto.randomUUID()).describe('Unique identifier for the experience entry'),
         title: z.string().optional().describe('The job title.'),
         company: z.string().optional().describe('The company name.'),
         dates: z.string().optional().describe('The dates of employment.'),
@@ -37,6 +38,7 @@ const ParseExistingResumeOutputSchema = z.object({
   education: z
     .array(
       z.object({
+        id: z.string().default(() => crypto.randomUUID()).describe('Unique identifier for the education entry'),
         institution: z.string().optional().describe('The name of the educational institution.'),
         degree: z.string().optional().describe('The degree obtained.'),
         dates: z.string().optional().describe('The dates of attendance.'),
@@ -48,6 +50,7 @@ const ParseExistingResumeOutputSchema = z.object({
   projects: z
     .array(
       z.object({
+        id: z.string().default(() => crypto.randomUUID()).describe('Unique identifier for the project entry'),
         name: z.string().optional().describe('The project name.'),
         description: z.string().optional().describe('A description of the project.'),
         dates: z.string().optional().describe('The dates of the project.'),
@@ -67,7 +70,7 @@ const prompt = ai.definePrompt({
   name: 'parseExistingResumePrompt',
   input: {schema: ParseExistingResumeInputSchema},
   output: {schema: ParseExistingResumeOutputSchema},
-  prompt: `You are an expert resume parser. Extract the following information from the resume text provided.
+  prompt: `You are an expert resume parser. Extract the following information from the resume text provided. For each item in experience, education, and projects arrays, generate a unique id.
 
 Resume Text: {{{resumeText}}}
 
@@ -82,7 +85,26 @@ const parseExistingResumeFlow = ai.defineFlow(
     outputSchema: ParseExistingResumeOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
-    return output!;
+    const response = await prompt(input);
+    const output = response.output!;
+
+    // Ensure IDs are present
+    if (output.experience) {
+        output.experience.forEach(item => {
+            if (!item.id) item.id = crypto.randomUUID();
+        });
+    }
+    if (output.education) {
+        output.education.forEach(item => {
+            if (!item.id) item.id = crypto.randomUUID();
+        });
+    }
+     if (output.projects) {
+        output.projects.forEach(item => {
+            if (!item.id) item.id = crypto.randomUUID();
+        });
+    }
+    
+    return output;
   }
 );

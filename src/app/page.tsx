@@ -1,6 +1,7 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
+import { produce } from 'immer';
 
 import { parseExistingResume } from '@/ai/flows/parse-existing-resume';
 import { scoreSkills } from '@/ai/flows/score-skills-based-on-relevance';
@@ -10,6 +11,7 @@ import type {
   ResumeData,
   SkillScore,
   ContentEvaluation,
+  SectionType,
 } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ResumePreview } from '@/components/resume-preview';
@@ -60,6 +62,16 @@ const initialResume: ResumeData = {
       url: 'project-dashboard.example.com',
     },
   ],
+  sections: [
+    { id: 'summary', title: 'Professional Summary', enabled: true },
+    { id: 'experience', title: 'Work Experience', enabled: true },
+    { id: 'projects', title: 'Projects', enabled: true },
+    { id: 'education', title: 'Education', enabled: true },
+    { id: 'skills', title: 'Skills', enabled: true },
+  ],
+  theme: {
+    primaryColor: '210 86% 53%',
+  },
 };
 
 export default function Home() {
@@ -70,15 +82,28 @@ export default function Home() {
     useState<ContentEvaluation | null>(null);
   const { toast } = useToast();
 
-  const handleResumeUpdate = useCallback((newData: ResumeData) => {
-    setResumeData(newData);
+  useEffect(() => {
+    document.documentElement.style.setProperty('--primary', resumeData.theme.primaryColor);
+  }, [resumeData.theme.primaryColor]);
+
+  const handleResumeUpdate = useCallback((newData: Partial<ResumeData>) => {
+    setResumeData(produce(draft => {
+      Object.assign(draft, newData);
+    }));
   }, []);
 
   const handleParseResume = async (text: string) => {
     setLoading('parse');
     try {
       const parsedData = await parseExistingResume({ resumeText: text });
-      setResumeData(parsedData);
+      
+      setResumeData(produce(draft => {
+        Object.assign(draft, parsedData);
+        // Ensure sections and theme are not overwritten
+        if (!draft.sections) draft.sections = initialResume.sections;
+        if (!draft.theme) draft.theme = initialResume.theme;
+      }));
+
       toast({
         title: 'Resume Parsed',
         description: 'Your resume has been successfully imported.',

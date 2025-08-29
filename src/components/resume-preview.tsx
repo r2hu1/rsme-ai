@@ -1,12 +1,31 @@
 'use client';
 
-import React from 'react';
-import type { ResumeData } from '@/lib/types';
-import { Mail, Phone, User, Briefcase, GraduationCap, Wrench, Sparkles, FolderGit2, Link } from 'lucide-react';
-import { debounce } from 'lodash';
+import React, { useRef, useMemo } from 'react';
+import type { ResumeData, Experience, Education, Project, SectionType, Section as SectionData } from '@/lib/types';
+import { Mail, Phone, User, Briefcase, GraduationCap, Wrench, Sparkles, FolderGit2, Link, GripVertical } from 'lucide-react';
+import { produce } from 'immer';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  DragOverlay
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  SortableContextProps,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { cn } from '@/lib/utils';
 
-const EditableField = ({ value, onSave, multiline = false, as: Component = 'div' }: { value: string; onSave: (newValue: string) => void; multiline?: boolean, as?: React.ElementType }) => {
-  const fieldRef = React.useRef<HTMLElement>(null);
+
+const EditableField = ({ value, onSave, multiline = false, as: Component = 'div', className }: { value: string; onSave: (newValue: string) => void; multiline?: boolean, as?: React.ElementType, className?: string }) => {
+  const fieldRef = useRef<HTMLElement>(null);
 
   React.useEffect(() => {
     if (fieldRef.current && value !== fieldRef.current.innerHTML) {
@@ -38,24 +57,245 @@ const EditableField = ({ value, onSave, multiline = false, as: Component = 'div'
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
       dangerouslySetInnerHTML={{ __html: value }}
-      className="outline-none focus:bg-primary/10 focus:ring-1 focus:ring-primary rounded-sm px-1 -mx-1"
+      className={cn("outline-none focus:bg-primary/10 focus:ring-1 focus:ring-primary rounded-sm px-1 -mx-1", className)}
     />
   );
 };
 
-export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpdate: (newData: ResumeData) => void }) {
-  const { name, email, phone, summary, experience, education, skills, projects } = resume;
+// Item component for sortable lists
+function SortableItem<T extends { id: string }>({ id, onUpdate, children }: { id: string, onUpdate: (id: string, path: string, value: any) => void, children: React.ReactNode }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+  
+  return (
+    <div ref={setNodeRef} style={style} className="relative group/item">
+      {children}
+      <button {...attributes} {...listeners} className="absolute -left-6 top-1/2 -translate-y-1/2 p-1 text-muted-foreground opacity-0 group-hover/item:opacity-100 focus:opacity-100 transition-opacity">
+        <GripVertical className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
+// Draggable Section component
+const Section = ({ section, resume, onUpdate, children }: { section: SectionData, resume: ResumeData, onUpdate: (data: Partial<ResumeData>) => void, children: React.ReactNode }) => {
+   const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: section.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.8 : 1,
+    zIndex: isDragging ? 10 : 'auto'
+  };
+
+  const handleTitleUpdate = (newTitle: string) => {
+    const updatedSections = produce(resume.sections, draft => {
+      const sec = draft.find(s => s.id === section.id);
+      if (sec) sec.title = newTitle;
+    });
+    onUpdate({ sections: updatedSections });
+  };
+
+  return (
+     <section ref={setNodeRef} style={style} className="relative group/section">
+        <div
+          className="flex items-center gap-3 text-lg font-semibold font-headline border-b-2 border-primary pb-2 mb-4"
+        >
+          <EditableField value={section.title} onSave={handleTitleUpdate} as="h2" className="flex-grow" />
+          <button {...attributes} {...listeners} className="p-1 text-muted-foreground opacity-0 group-hover/section:opacity-100 focus:opacity-100 transition-opacity cursor-grab active:cursor-grabbing">
+            <GripVertical className="h-5 w-5" />
+          </button>
+        </div>
+      {children}
+    </section>
+  )
+}
+
+export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpdate: (newData: Partial<ResumeData>) => void }) {
+  const { name, email, phone, summary, experience, education, skills, projects, sections } = resume;
 
   const handleUpdate = (path: string, value: any) => {
-    const keys = path.split('.');
-    const newResumeData = JSON.parse(JSON.stringify(resume));
-    let current: any = newResumeData;
-    for (let i = 0; i < keys.length - 1; i++) {
-      current = current[keys[i]];
-    }
-    current[keys[keys.length - 1]] = value;
-    onUpdate(newResumeData);
+    onUpdate(produce(resume, draft => {
+      const keys = path.split('.');
+      let current: any = draft;
+      for (let i = 0; i < keys.length - 1; i++) {
+        current = current[keys[i]];
+      }
+      current[keys[keys.length - 1]] = value;
+    }));
   };
+
+  const handleItemUpdate = (itemId: string, path: string, value: any) => {
+     onUpdate(produce(resume, draft => {
+        const [sectionKey, ...rest] = path.split('.');
+        const items = draft[sectionKey as SectionType] as any[];
+        if (items && Array.isArray(items)) {
+            const itemIndex = items.findIndex(i => i.id === itemId);
+            if (itemIndex > -1) {
+                let current: any = items[itemIndex];
+                const keys = rest.slice(0, -1);
+                 for (let i = 0; i < keys.length; i++) {
+                    current = current[keys[i]];
+                }
+                current[rest[rest.length - 1]] = value;
+            }
+        }
+    }));
+  }
+  
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
+
+  const sectionOrder = useMemo(() => sections.map(s => s.id), [sections]);
+
+  function handleSectionDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (active.id !== over?.id) {
+      const oldIndex = sectionOrder.indexOf(active.id as SectionType);
+      const newIndex = sectionOrder.indexOf(over!.id as SectionType);
+      const newSections = arrayMove(sections, oldIndex, newIndex);
+      onUpdate({ sections: newSections });
+    }
+  }
+
+  function handleItemDragEnd(event: DragEndEvent, sectionType: SectionType) {
+    const { active, over } = event;
+    if (active.id !== over?.id) {
+      const items = resume[sectionType] as any[];
+      if(items && Array.isArray(items)) {
+        const oldIndex = items.findIndex(item => item.id === active.id);
+        const newIndex = items.findIndex(item => item.id === over!.id);
+        const newItems = arrayMove(items, oldIndex, newIndex);
+        onUpdate({ [sectionType]: newItems });
+      }
+    }
+  }
+
+  const renderSection = (sectionId: SectionType) => {
+    const sectionData = sections.find(s => s.id === sectionId);
+    if (!sectionData || !sectionData.enabled) return null;
+    
+    switch(sectionId) {
+        case 'summary':
+            return summary != null && (
+            <Section key={sectionId} section={sectionData} resume={resume} onUpdate={onUpdate}>
+              <div className="text-sm leading-relaxed"><EditableField value={summary} onSave={(v) => handleUpdate('summary', v)} multiline /></div>
+            </Section>
+          );
+        case 'experience':
+            return experience && experience.length > 0 && (
+            <Section key={sectionId} section={sectionData} resume={resume} onUpdate={onUpdate}>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => handleItemDragEnd(e, 'experience')}>
+                <SortableContext items={experience} strategy={verticalListSortingStrategy}>
+                  <div className="space-y-6">
+                    {experience.map((exp) => (
+                      <SortableItem key={exp.id} id={exp.id!} onUpdate={handleItemUpdate}>
+                        <div className="space-y-1">
+                          <div className="flex justify-between items-baseline">
+                            <h3 className="font-semibold"><EditableField value={exp.title || ''} onSave={(v) => handleItemUpdate(exp.id!, 'experience.title', v)} as="div" /></h3>
+                            <div className="text-xs text-muted-foreground"><EditableField value={exp.dates || ''} onSave={(v) => handleItemUpdate(exp.id!, 'experience.dates', v)} /></div>
+                          </div>
+                          <div className="text-sm font-medium text-primary"><EditableField value={exp.company || ''} onSave={(v) => handleItemUpdate(exp.id!, 'experience.company', v)} /></div>
+                          <div className="text-sm text-muted-foreground pt-1"><EditableField value={exp.description || ''} onSave={(v) => handleItemUpdate(exp.id!, 'experience.description', v)} multiline /></div>
+                        </div>
+                      </SortableItem>
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
+            </Section>
+          );
+        case 'projects':
+            return projects && projects.length > 0 && (
+            <Section key={sectionId} section={sectionData} resume={resume} onUpdate={onUpdate}>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => handleItemDragEnd(e, 'projects')}>
+                <SortableContext items={projects} strategy={verticalListSortingStrategy}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                    {projects.map((project) => (
+                      <SortableItem key={project.id} id={project.id!} onUpdate={handleItemUpdate}>
+                        <div className="space-y-1 break-inside-avoid">
+                          <div className="flex justify-between items-baseline">
+                            <h3 className="font-semibold"><EditableField value={project.name || ''} onSave={(v) => handleItemUpdate(project.id!, 'projects.name', v)} as="div" /></h3>
+                            <div className="text-xs text-muted-foreground"><EditableField value={project.dates || ''} onSave={(v) => handleItemUpdate(project.id!, 'projects.dates', v)} /></div>
+                          </div>
+                          {project.url && (
+                              <div className="flex items-center gap-2 text-sm text-primary hover:underline">
+                                  <Link className="h-3 w-3" />
+                                  <EditableField value={project.url} onSave={(v) => handleItemUpdate(project.id!, 'projects.url', v)} />
+                              </div>
+                          )}
+                          <div className="text-sm text-muted-foreground pt-1"><EditableField value={project.description || ''} onSave={(v) => handleItemUpdate(project.id!, 'projects.description', v)} multiline /></div>
+                        </div>
+                      </SortableItem>
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
+            </Section>
+          );
+        case 'education':
+          return education && education.length > 0 && (
+            <Section key={sectionId} section={sectionData} resume={resume} onUpdate={onUpdate}>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => handleItemDragEnd(e, 'education')}>
+                <SortableContext items={education} strategy={verticalListSortingStrategy}>
+                  <div className="space-y-4">
+                    {education.map((edu) => (
+                      <SortableItem key={edu.id} id={edu.id!} onUpdate={handleItemUpdate}>
+                        <div>
+                          <div className="flex justify-between items-baseline">
+                            <h3 className="font-semibold"><EditableField value={edu.institution || ''} onSave={(v) => handleItemUpdate(edu.id!, 'education.institution', v)} as="div" /></h3>
+                            <div className="text-xs text-muted-foreground"><EditableField value={edu.dates || ''} onSave={(v) => handleItemUpdate(edu.id!, 'education.dates', v)} /></div>
+                          </div>
+                          <div className="text-sm text-muted-foreground"><EditableField value={edu.degree || ''} onSave={(v) => handleItemUpdate(edu.id!, 'education.degree', v)} /></div>
+                        </div>
+                      </SortableItem>
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
+            </Section>
+          );
+        case 'skills':
+            return skills && skills.length > 0 && (
+            <Section key={sectionId} section={sectionData} resume={resume} onUpdate={onUpdate}>
+              <div className="flex flex-wrap gap-2">
+                {skills.map((skill, index) => (
+                  <div key={`${skill}-${index}`} className="bg-secondary text-secondary-foreground rounded-full px-3 py-1 text-sm">
+                    <EditableField value={skill} onSave={(v) => handleUpdate(`skills.${index}`, v)} />
+                  </div>
+                ))}
+              </div>
+            </Section>
+          );
+        default:
+            return null;
+    }
+  }
+
 
   return (
     <div id="resume-preview" className="w-full h-full bg-card rounded-lg shadow-lg overflow-y-auto p-8 lg:p-12 text-card-foreground">
@@ -81,103 +321,11 @@ export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpda
 
         {/* Main Content */}
         <main className="grid grid-cols-1 gap-10">
-          {/* Summary */}
-          {summary != null && (
-            <section>
-              <h2 className="flex items-center gap-3 text-lg font-semibold font-headline border-b-2 border-primary pb-2 mb-4">
-                <User className="h-5 w-5 text-primary" />
-                Professional Summary
-              </h2>
-              <div className="text-sm leading-relaxed"><EditableField value={summary} onSave={(v) => handleUpdate('summary', v)} multiline /></div>
-            </section>
-          )}
-
-          {/* Experience */}
-          {experience && experience.length > 0 && (
-            <section>
-              <h2 className="flex items-center gap-3 text-lg font-semibold font-headline border-b-2 border-primary pb-2 mb-4">
-                <Briefcase className="h-5 w-5 text-primary" />
-                Work Experience
-              </h2>
-              <div className="space-y-6">
-                {experience.map((exp, index) => (
-                  <div key={`${exp.company}-${index}`} className="space-y-1">
-                    <div className="flex justify-between items-baseline">
-                      <h3 className="font-semibold"><EditableField value={exp.title || ''} onSave={(v) => handleUpdate(`experience.${index}.title`, v)} as="div" /></h3>
-                      <div className="text-xs text-muted-foreground"><EditableField value={exp.dates || ''} onSave={(v) => handleUpdate(`experience.${index}.dates`, v)} /></div>
-                    </div>
-                    <div className="text-sm font-medium text-primary"><EditableField value={exp.company || ''} onSave={(v) => handleUpdate(`experience.${index}.company`, v)} /></div>
-                    <div className="text-sm text-muted-foreground pt-1"><EditableField value={exp.description || ''} onSave={(v) => handleUpdate(`experience.${index}.description`, v)} multiline /></div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Projects */}
-          {projects && projects.length > 0 && (
-            <section>
-              <h2 className="flex items-center gap-3 text-lg font-semibold font-headline border-b-2 border-primary pb-2 mb-4">
-                <FolderGit2 className="h-5 w-5 text-primary" />
-                Projects
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {projects.map((project, index) => (
-                  <div key={`${project.name}-${index}`} className="space-y-1 break-inside-avoid">
-                    <div className="flex justify-between items-baseline">
-                      <h3 className="font-semibold"><EditableField value={project.name || ''} onSave={(v) => handleUpdate(`projects.${index}.name`, v)} as="div" /></h3>
-                      <div className="text-xs text-muted-foreground"><EditableField value={project.dates || ''} onSave={(v) => handleUpdate(`projects.${index}.dates`, v)} /></div>
-                    </div>
-                    {project.url && (
-                        <div className="flex items-center gap-2 text-sm text-primary hover:underline">
-                            <Link className="h-3 w-3" />
-                            <EditableField value={project.url} onSave={(v) => handleUpdate(`projects.${index}.url`, v)} />
-                        </div>
-                    )}
-                    <div className="text-sm text-muted-foreground pt-1"><EditableField value={project.description || ''} onSave={(v) => handleUpdate(`projects.${index}.description`, v)} multiline /></div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Education */}
-          {education && education.length > 0 && (
-            <section>
-              <h2 className="flex items-center gap-3 text-lg font-semibold font-headline border-b-2 border-primary pb-2 mb-4">
-                <GraduationCap className="h-5 w-5 text-primary" />
-                Education
-              </h2>
-              <div className="space-y-4">
-                {education.map((edu, index) => (
-                  <div key={`${edu.institution}-${index}`}>
-                    <div className="flex justify-between items-baseline">
-                      <h3 className="font-semibold"><EditableField value={edu.institution || ''} onSave={(v) => handleUpdate(`education.${index}.institution`, v)} as="div" /></h3>
-                      <div className="text-xs text-muted-foreground"><EditableField value={edu.dates || ''} onSave={(v) => handleUpdate(`education.${index}.dates`, v)} /></div>
-                    </div>
-                    <div className="text-sm text-muted-foreground"><EditableField value={edu.degree || ''} onSave={(v) => handleUpdate(`education.${index}.degree`, v)} /></div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Skills */}
-          {skills && skills.length > 0 && (
-            <section>
-              <h2 className="flex items-center gap-3 text-lg font-semibold font-headline border-b-2 border-primary pb-2 mb-4">
-                <Wrench className="h-5 w-5 text-primary" />
-                Skills
-              </h2>
-              <div className="flex flex-wrap gap-2">
-                {skills.map((skill, index) => (
-                  <div key={`${skill}-${index}`} className="bg-secondary text-secondary-foreground rounded-full px-3 py-1 text-sm">
-                    <EditableField value={skill} onSave={(v) => handleUpdate(`skills.${index}`, v)} />
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSectionDragEnd}>
+            <SortableContext items={sections} strategy={verticalListSortingStrategy}>
+              {sectionOrder.map(sectionId => renderSection(sectionId))}
+            </SortableContext>
+          </DndContext>
 
           {!name && !summary && (!experience || experience.length === 0) && (
             <div className="text-center py-20 text-muted-foreground">

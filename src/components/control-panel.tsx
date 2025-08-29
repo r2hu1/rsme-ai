@@ -13,6 +13,7 @@ import {
   BarChart,
   ClipboardCheck,
   Star,
+  Palette,
 } from 'lucide-react';
 
 import {
@@ -43,7 +44,7 @@ import { Progress } from './ui/progress';
 
 interface ControlPanelProps {
   resumeData: ResumeData;
-  onResumeUpdate: (data: ResumeData) => void;
+  onResumeUpdate: (data: Partial<ResumeData>) => void;
   onParse: (text: string) => Promise<void>;
   onScoreSkills: (jobDescription: string) => Promise<void>;
   onAnalyzeContent: () => Promise<void>;
@@ -58,24 +59,43 @@ const resumeSchema = z.object({
   phone: z.string().optional(),
   summary: z.string().optional(),
   experience: z.array(z.object({
+    id: z.string().optional(),
     title: z.string().optional(),
     company: z.string().optional(),
     dates: z.string().optional(),
     description: z.string().optional(),
   })).optional(),
   education: z.array(z.object({
+    id: z.string().optional(),
     institution: z.string().optional(),
     degree: z.string().optional(),
     dates: z.string().optional(),
   })).optional(),
   skills: z.array(z.string()).optional(),
   projects: z.array(z.object({
+    id: z.string().optional(),
     name: z.string().optional(),
     description: z.string().optional(),
     dates: z.string().optional(),
     url: z.string().optional(),
   })).optional(),
+  sections: z.array(z.object({
+    id: z.string(),
+    title: z.string(),
+    enabled: z.boolean(),
+  })).optional(),
+  theme: z.object({
+    primaryColor: z.string(),
+  }).optional(),
 });
+
+const colorOptions = [
+  { name: 'Default Blue', value: '210 86% 53%' },
+  { name: 'Forest Green', value: '158 64% 35%' },
+  { name: 'Charcoal Gray', value: '220 9% 46%' },
+  { name: 'Royal Purple', value: '260 52% 47%' },
+  { name: 'Crimson Red', value: '348 83% 47%' },
+];
 
 export function ControlPanel({
   resumeData,
@@ -121,12 +141,11 @@ export function ControlPanel({
   });
 
   const handleBlur = () => {
-    const values = form.getValues();
-    onResumeUpdate(values);
+    form.handleSubmit(d => onResumeUpdate(d))();
   };
 
   return (
-    <Accordion type="multiple" defaultValue={['import', 'content']} className="w-full">
+    <Accordion type="multiple" defaultValue={['import', 'content', 'customize']} className="w-full">
       <AccordionItem value="import">
         <AccordionTrigger className="text-lg font-semibold">
           <div className="flex items-center gap-3">
@@ -156,6 +175,56 @@ export function ControlPanel({
         </AccordionContent>
       </AccordionItem>
 
+      <AccordionItem value="customize">
+        <AccordionTrigger className="text-lg font-semibold">
+          <div className="flex items-center gap-3">
+            <Palette className="h-5 w-5" /> Customize
+          </div>
+        </AccordionTrigger>
+        <AccordionContent className="pt-2">
+           <Form {...form}>
+            <form onBlur={handleBlur} className="space-y-6">
+              <Card>
+                <CardHeader><CardTitle>Theme Color</CardTitle></CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-5 gap-2">
+                    {colorOptions.map(color => (
+                      <Button
+                        key={color.name}
+                        type="button"
+                        variant={resumeData.theme.primaryColor === color.value ? 'default' : 'outline'}
+                        className="h-12 w-12 rounded-full p-0 border-2"
+                        style={{ backgroundColor: `hsl(${color.value})`}}
+                        onClick={() => onResumeUpdate({ theme: { primaryColor: color.value } })}
+                        title={color.name}
+                      />
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader><CardTitle>Section Titles</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                  {resumeData.sections.map((section, index) => (
+                    <FormField
+                      key={section.id}
+                      control={form.control}
+                      name={`sections.${index}.title`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{section.id.charAt(0).toUpperCase() + section.id.slice(1)}</FormLabel>
+                          <FormControl><Input {...field} /></FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  ))}
+                </CardContent>
+              </Card>
+            </form>
+          </Form>
+        </AccordionContent>
+      </AccordionItem>
+      
       <AccordionItem value="content">
         <AccordionTrigger className="text-lg font-semibold">
           <div className="flex items-center gap-3">
@@ -182,7 +251,7 @@ export function ControlPanel({
               </Card>
 
               <Card>
-                 <CardHeader><CardTitle className="flex justify-between items-center"><span>Experience</span><Button type="button" size="sm" variant="ghost" onClick={() => appendExp({})}><PlusCircle className="mr-2 h-4 w-4" />Add</Button></CardTitle></CardHeader>
+                 <CardHeader><CardTitle className="flex justify-between items-center"><span>Experience</span><Button type="button" size="sm" variant="ghost" onClick={() => appendExp({ id: crypto.randomUUID() })}><PlusCircle className="mr-2 h-4 w-4" />Add</Button></CardTitle></CardHeader>
                 <CardContent className="space-y-4">
                   {expFields.map((field, index) => (
                     <Card key={field.id} className="p-4 relative">
@@ -199,7 +268,7 @@ export function ControlPanel({
               </Card>
               
               <Card>
-                 <CardHeader><CardTitle className="flex justify-between items-center"><span>Education</span><Button type="button" size="sm" variant="ghost" onClick={() => appendEdu({})}><PlusCircle className="mr-2 h-4 w-4" />Add</Button></CardTitle></CardHeader>
+                 <CardHeader><CardTitle className="flex justify-between items-center"><span>Education</span><Button type="button" size="sm" variant="ghost" onClick={() => appendEdu({ id: crypto.randomUUID() })}><PlusCircle className="mr-2 h-4 w-4" />Add</Button></CardTitle></CardHeader>
                  <CardContent className="space-y-4">
                   {eduFields.map((field, index) => (
                     <Card key={field.id} className="p-4 relative">
@@ -215,7 +284,7 @@ export function ControlPanel({
               </Card>
 
               <Card>
-                <CardHeader><CardTitle className="flex justify-between items-center"><span>Projects</span><Button type="button" size="sm" variant="ghost" onClick={() => appendProject({})}><PlusCircle className="mr-2 h-4 w-4" />Add</Button></CardTitle></CardHeader>
+                <CardHeader><CardTitle className="flex justify-between items-center"><span>Projects</span><Button type="button" size="sm" variant="ghost" onClick={() => appendProject({ id: crypto.randomUUID() })}><PlusCircle className="mr-2 h-4 w-4" />Add</Button></CardTitle></CardHeader>
                 <CardContent className="space-y-4">
                   {projectFields.map((field, index) => (
                     <Card key={field.id} className="p-4 relative">

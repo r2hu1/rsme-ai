@@ -2,7 +2,20 @@ import type { ParseExistingResumeOutput } from '@/ai/flows/parse-existing-resume
 import type { ScoreSkillsOutput } from '@/ai/flows/score-skills-based-on-relevance';
 import type { EvaluateResumeContentOutput } from '@/ai/flows/evaluate-resume-content';
 
-export type ResumeData = ParseExistingResumeOutput;
+export type SectionType = 'summary' | 'experience' | 'projects' | 'education' | 'skills';
+
+export interface Section {
+  id: SectionType;
+  title: string;
+  enabled: boolean;
+}
+
+export interface ResumeData extends ParseExistingResumeOutput {
+  sections: Section[];
+  theme: {
+    primaryColor: string;
+  };
+}
 
 export type Experience = NonNullable<ResumeData['experience']>[0];
 export type Education = NonNullable<ResumeData['education']>[0];
