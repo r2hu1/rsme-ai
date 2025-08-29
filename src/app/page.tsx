@@ -47,6 +47,20 @@ const initialResume: ResumeData = {
     },
   ],
   skills: ['React', 'TypeScript', 'Node.js', 'Python', 'AWS', 'Docker', 'SQL'],
+  projects: [
+    {
+      name: 'E-commerce Search Platform',
+      description: 'Built a high-performance search engine for an e-commerce site using Elasticsearch, resulting in a 30% increase in conversion rates.',
+      dates: '2022',
+      url: 'project-search.example.com',
+    },
+    {
+      name: 'Data Visualization Dashboard',
+      description: 'Designed and developed a real-time data visualization dashboard with D3.js and React.',
+      dates: '2021',
+      url: 'project-dashboard.example.com',
+    },
+  ],
 };
 
 export default function Home() {

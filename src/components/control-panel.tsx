@@ -69,6 +69,12 @@ const resumeSchema = z.object({
     dates: z.string().optional(),
   })).optional(),
   skills: z.array(z.string()).optional(),
+  projects: z.array(z.object({
+    name: z.string().optional(),
+    description: z.string().optional(),
+    dates: z.string().optional(),
+    url: z.string().optional(),
+  })).optional(),
 });
 
 export function ControlPanel({
@@ -110,6 +116,11 @@ export function ControlPanel({
   const { fields: skillFields, append: appendSkill, remove: removeSkill } = useFieldArray({
     control: form.control,
     name: "skills",
+  });
+
+  const { fields: projectFields, append: appendProject, remove: removeProject } = useFieldArray({
+    control: form.control,
+    name: "projects",
   });
 
   const handleFormChange = () => {
@@ -208,6 +219,23 @@ export function ControlPanel({
                     </Card>
                   ))}
                  </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader><CardTitle className="flex justify-between items-center"><span>Projects</span><Button type="button" size="sm" variant="ghost" onClick={() => appendProject({})}><PlusCircle className="mr-2 h-4 w-4" />Add</Button></CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                  {projectFields.map((field, index) => (
+                    <Card key={field.id} className="p-4 relative">
+                      <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6" onClick={() => removeProject(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                      <div className="space-y-2">
+                        <FormField control={form.control} name={`projects.${index}.name`} render={({ field }) => ( <FormItem> <FormLabel>Project Name</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem> )} />
+                        <FormField control={form.control} name={`projects.${index}.dates`} render={({ field }) => ( <FormItem> <FormLabel>Dates</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem> )} />
+                        <FormField control={form.control} name={`projects.${index}.url`} render={({ field }) => ( <FormItem> <FormLabel>URL</FormLabel> <FormControl><Input {...field} /></FormControl> </FormItem> )} />
+                        <FormField control={form.control} name={`projects.${index}.description`} render={({ field }) => ( <FormItem> <FormLabel>Description</FormLabel> <FormControl><Textarea {...field} /></FormControl> </FormItem> )} />
+                      </div>
+                    </Card>
+                  ))}
+                </CardContent>
               </Card>
 
               <Card>

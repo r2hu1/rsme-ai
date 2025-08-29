@@ -45,6 +45,17 @@ const ParseExistingResumeOutputSchema = z.object({
     .optional()
     .describe('A list of educational experiences.'),
   skills: z.array(z.string()).optional().describe('A list of skills.'),
+  projects: z
+    .array(
+      z.object({
+        name: z.string().optional().describe('The project name.'),
+        description: z.string().optional().describe('A description of the project.'),
+        dates: z.string().optional().describe('The dates of the project.'),
+        url: z.string().optional().describe('A URL for the project.'),
+      })
+    )
+    .optional()
+    .describe('A list of projects.'),
 });
 export type ParseExistingResumeOutput = z.infer<typeof ParseExistingResumeOutputSchema>;
 

@@ -1,10 +1,10 @@
 'use client';
 
 import type { ResumeData } from '@/lib/types';
-import { Mail, Phone, MapPin, User, Briefcase, GraduationCap, Wrench, Sparkles } from 'lucide-react';
+import { Mail, Phone, MapPin, User, Briefcase, GraduationCap, Wrench, Sparkles, FolderGit2, Link } from 'lucide-react';
 
 export function ResumePreview({ resume }: { resume: ResumeData }) {
-  const { name, email, phone, summary, experience, education, skills } = resume;
+  const { name, email, phone, summary, experience, education, skills, projects } = resume;
 
   return (
     <div id="resume-preview" className="w-full h-full bg-card rounded-lg shadow-lg overflow-y-auto p-8 lg:p-12 text-card-foreground">
@@ -57,6 +57,33 @@ export function ResumePreview({ resume }: { resume: ResumeData }) {
                     </div>
                     <p className="text-sm font-medium text-primary">{exp.company}</p>
                     <p className="text-sm text-muted-foreground pt-1">{exp.description}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Projects */}
+          {projects && projects.length > 0 && (
+            <section>
+              <h2 className="flex items-center gap-3 text-lg font-semibold font-headline border-b-2 border-primary pb-2 mb-4">
+                <FolderGit2 className="h-5 w-5 text-primary" />
+                Projects
+              </h2>
+              <div className="space-y-6">
+                {projects.map((project, index) => (
+                  <div key={index} className="space-y-1">
+                    <div className="flex justify-between items-baseline">
+                      <h3 className="font-semibold">{project.name}</h3>
+                      <p className="text-xs text-muted-foreground">{project.dates}</p>
+                    </div>
+                    {project.url && (
+                        <a href={project.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-primary hover:underline">
+                            <Link className="h-3 w-3" />
+                            {project.url}
+                        </a>
+                    )}
+                    <p className="text-sm text-muted-foreground pt-1">{project.description}</p>
                   </div>
                 ))}
               </div>
