@@ -40,7 +40,6 @@ import {
 import type {
   ResumeData,
   SkillScore,
-  ContentEvaluation,
 } from '@/lib/types';
 import { Progress } from './ui/progress';
 import { Switch } from './ui/switch';
@@ -51,10 +50,8 @@ interface ControlPanelProps {
   onResumeUpdate: (data: Partial<ResumeData>) => void;
   onParse: (text: string) => Promise<void>;
   onScoreSkills: (jobDescription: string) => Promise<void>;
-  onAnalyzeContent: () => Promise<void>;
   loading: string | null;
   skillScores: SkillScore[] | null;
-  contentEvaluation: ContentEvaluation | null;
 }
 
 const resumeSchema = z.object({
@@ -105,10 +102,8 @@ export function ControlPanel({
   onResumeUpdate,
   onParse,
   onScoreSkills,
-  onAnalyzeContent,
   loading,
   skillScores,
-  contentEvaluation,
 }: ControlPanelProps) {
   const [importText, setImportText] = useState('');
   const [jobDescription, setJobDescription] = useState('');
@@ -148,9 +143,9 @@ export function ControlPanel({
   };
   
   const handleItemRemove = (remover: (index: number) => void, index: number, fieldName: keyof ResumeData) => {
-    remover(index);
-    const updatedValues = form.getValues();
-    onResumeUpdate({ [fieldName]: updatedValues[fieldName] });
+    const currentValues = form.getValues();
+    const updatedArray = (currentValues[fieldName] as any[]).filter((_, i) => i !== index);
+    onResumeUpdate({ [fieldName]: updatedArray });
   };
 
   const addCustomSection = () => {
@@ -530,50 +525,6 @@ export function ControlPanel({
                         <Progress value={score} />
                       </div>
                     ))}
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-
-        <AccordionItem value="analyze">
-          <AccordionTrigger className="text-lg font-semibold">
-            <div className="flex items-center gap-3">
-              <ClipboardCheck className="h-5 w-5" /> Content Analysis
-            </div>
-          </AccordionTrigger>
-          <AccordionContent className="pt-2">
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Let our AI analyze your resume for clarity, grammar, and overall effectiveness.
-              </p>
-              <Button onClick={onAnalyzeContent} disabled={loading === 'analyze'} className="w-full">
-                {loading === 'analyze' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ClipboardCheck className="mr-2 h-4 w-4" />}
-                Analyze Resume
-              </Button>
-              {contentEvaluation && (
-                <Card>
-                  <CardHeader><CardTitle>Analysis Results</CardTitle></CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <div className="flex justify-between mb-1">
-                        <Label>Clarity Score</Label>
-                        <span className="text-sm font-medium text-primary">{contentEvaluation.clarityScore}/100</span>
-                      </div>
-                      <Progress value={contentEvaluation.clarityScore} />
-                    </div>
-                    <div>
-                      <div className="flex justify-between mb-1">
-                        <Label>Grammar Score</Label>
-                        <span className="text-sm font-medium text-primary">{contentEvaluation.grammarScore}/100</span>
-                      </div>
-                      <Progress value={contentEvaluation.grammarScore} />
-                    </div>
-                    <div>
-                      <Label className="flex items-center gap-2 mb-2"><Star className="h-4 w-4 text-primary" />AI Feedback</Label>
-                      <p className="text-sm text-muted-foreground bg-muted p-3 rounded-md border">{contentEvaluation.effectivenessFeedback}</p>
-                    </div>
                   </CardContent>
                 </Card>
               )}

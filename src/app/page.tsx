@@ -13,9 +13,8 @@ import {
   Star,
   Palette,
   Printer,
+  Sparkles,
 } from 'lucide-react';
-import { useDebounceCallback } from 'usehooks-ts'
-
 
 import { parseExistingResume } from '@/ai/flows/parse-existing-resume';
 import { scoreSkills } from '@/ai/flows/score-skills-based-on-relevance';
@@ -34,12 +33,15 @@ import { Logo } from '@/components/logo';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
+
 
 const initialResume: ResumeData = {
   name: 'Alex Doe',
@@ -109,6 +111,7 @@ export default function Home() {
   const [skillScores, setSkillScores] = useState<SkillScore[] | null>(null);
   const [contentEvaluation, setContentEvaluation] =
     useState<ContentEvaluation | null>(null);
+  const [isAnalysisDialogOpen, setIsAnalysisDialogOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -213,6 +216,7 @@ export default function Home() {
     try {
       const evaluation = await evaluateResumeContent({ resumeContent });
       setContentEvaluation(evaluation);
+      setIsAnalysisDialogOpen(true);
       toast({
         title: 'Analysis Complete',
         description: 'Your resume content has been evaluated.',
@@ -234,6 +238,18 @@ export default function Home() {
       <header className="flex h-16 items-center justify-between border-b px-4 lg:px-6 no-print">
         <Logo />
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={handleAnalyzeContent}
+            disabled={loading === 'analyze'}
+          >
+            {loading === 'analyze' ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Sparkles className="mr-2 h-4 w-4" />
+            )}
+            AI Analysis
+          </Button>
           <Button variant="outline" onClick={() => window.print()}>
             <Printer className="mr-2 h-4 w-4" />
             Print / Export PDF
@@ -249,10 +265,8 @@ export default function Home() {
                 onResumeUpdate={handleResumeUpdate}
                 onParse={handleParseResume}
                 onScoreSkills={handleScoreSkills}
-                onAnalyzeContent={handleAnalyzeContent}
                 loading={loading}
                 skillScores={skillScores}
-                contentEvaluation={contentEvaluation}
               />
             </div>
           </ScrollArea>
@@ -262,6 +276,59 @@ export default function Home() {
           <ResumePreview resume={resumeData} onUpdate={handleResumeUpdate} />
         </section>
       </main>
+
+      <Dialog open={isAnalysisDialogOpen} onOpenChange={setIsAnalysisDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-2xl">
+              <Sparkles className="h-6 w-6 text-primary" />
+              AI Resume Analysis
+            </DialogTitle>
+            <DialogDescription>
+              Here's a breakdown of your resume's scores and suggestions for
+              improvement.
+            </DialogDescription>
+          </DialogHeader>
+          {contentEvaluation && (
+            <div className="grid gap-6 pt-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div className="rounded-lg border bg-card p-4 text-center">
+                  <Label>Clarity Score</Label>
+                  <p className="text-3xl font-bold text-primary">
+                    {contentEvaluation.clarityScore}
+                  </p>
+                </div>
+                <div className="rounded-lg border bg-card p-4 text-center">
+                  <Label>Grammar Score</Label>
+                  <p className="text-3xl font-bold text-primary">
+                    {contentEvaluation.grammarScore}
+                  </p>
+                </div>
+                <div className="rounded-lg border bg-card p-4 text-center">
+                  <Label>ATS Score</Label>
+                  <p className="text-3xl font-bold text-primary">
+                    {contentEvaluation.atsScore}
+                  </p>
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold mb-2 flex items-center gap-2"><Star className="h-4 w-4 text-primary" />AI Feedback</h3>
+                <p className="text-sm text-muted-foreground bg-muted p-3 rounded-md border">{contentEvaluation.effectivenessFeedback}</p>
+              </div>
+
+              <div>
+                <h3 className="font-semibold mb-2 flex items-center gap-2"><ClipboardCheck className="h-4 w-4 text-primary" />Suggested Fixes</h3>
+                <ul className="space-y-2 text-sm text-muted-foreground list-disc pl-5 bg-muted p-3 rounded-md border">
+                  {contentEvaluation.suggestedFixes.map((fix, index) => (
+                    <li key={index}>{fix}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

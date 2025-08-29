@@ -19,7 +19,9 @@ export type EvaluateResumeContentInput = z.infer<typeof EvaluateResumeContentInp
 const EvaluateResumeContentOutputSchema = z.object({
   clarityScore: z.number().describe('A score indicating the clarity of the resume content (0-100).'),
   grammarScore: z.number().describe('A score indicating the quality of the grammar in the resume (0-100).'),
-  effectivenessFeedback: z.string().describe('Feedback on the overall effectiveness of the resume content.'),
+  atsScore: z.number().describe('An estimated Applicant Tracking System (ATS) compatibility score (0-100).'),
+  effectivenessFeedback: z.string().describe('General feedback on the overall effectiveness of the resume content.'),
+  suggestedFixes: z.array(z.string()).describe('A list of specific, actionable suggestions for improvement.'),
 });
 export type EvaluateResumeContentOutput = z.infer<typeof EvaluateResumeContentOutputSchema>;
 
@@ -31,19 +33,17 @@ const evaluateResumeContentPrompt = ai.definePrompt({
   name: 'evaluateResumeContentPrompt',
   input: {schema: EvaluateResumeContentInputSchema},
   output: {schema: EvaluateResumeContentOutputSchema},
-  prompt: `You are an expert resume evaluator. Analyze the following resume content for clarity, grammar, and overall effectiveness.
+  prompt: `You are an expert resume evaluator and career coach. Analyze the following resume content for clarity, grammar, ATS compatibility, and overall effectiveness.
 
 Resume Content:
 {{{resumeContent}}}
 
-Provide a clarity score (0-100), a grammar score (0-100), and feedback on the overall effectiveness of the resume content.
-
-Please adhere to the following format:
-{
-  "clarityScore": <clarity score>,
-  "grammarScore": <grammar score>,
-  "effectivenessFeedback": <effectiveness feedback>
-}
+Provide the following:
+1.  A clarity score (0-100).
+2.  A grammar score (0-100).
+3.  An estimated ATS score (0-100), considering keyword optimization and formatting.
+4.  General feedback on the overall effectiveness of the resume content.
+5.  A list of specific, actionable suggested fixes to improve the resume.
 `,
 });
 
