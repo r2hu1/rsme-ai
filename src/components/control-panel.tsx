@@ -14,6 +14,7 @@ import {
   ClipboardCheck,
   Star,
   Settings,
+  Palette,
 } from 'lucide-react';
 import { produce } from 'immer';
 
@@ -43,6 +44,7 @@ import type {
 } from '@/lib/types';
 import { Progress } from './ui/progress';
 import { Switch } from './ui/switch';
+import { Slider } from './ui/slider';
 
 interface ControlPanelProps {
   resumeData: ResumeData;
@@ -93,6 +95,7 @@ const resumeSchema = z.object({
     accentColor: z.string(),
     textColor: z.string(),
     mutedTextColor: z.string(),
+    borderWidth: z.number(),
   }),
 });
 
@@ -145,14 +148,9 @@ export function ControlPanel({
   });
   
   const handleItemRemove = (remover: (index: number) => void, index: number, fieldName: keyof ResumeData) => {
-    const currentData = form.getValues(fieldName as any);
-    if (Array.isArray(currentData)) {
-      const updatedData = [...currentData];
-      updatedData.splice(index, 1);
-      triggerUpdate({ [fieldName]: updatedData });
-    }
+    remover(index);
+    triggerUpdate({ [fieldName]: form.getValues(fieldName as any) });
   };
-
 
   const handleBlur = () => {
     form.handleSubmit(data => {
@@ -183,6 +181,81 @@ export function ControlPanel({
     });
     onResumeUpdate({ sections: updatedSections });
   };
+
+  const handleThemeChange = (colorType: keyof ResumeData['theme'], value: string) => {
+    triggerUpdate({
+      theme: { ...resumeData.theme, [colorType]: value }
+    });
+  };
+
+  const handleBorderWidthChange = (value: number[]) => {
+    triggerUpdate({
+      theme: { ...resumeData.theme, borderWidth: value[0] }
+    });
+  };
+  
+  const hexToHsl = (hex: string): string => {
+    let r = 0, g = 0, b = 0;
+    if (hex.length === 4) {
+      r = parseInt(hex[1] + hex[1], 16);
+      g = parseInt(hex[2] + hex[2], 16);
+      b = parseInt(hex[3] + hex[3], 16);
+    } else if (hex.length === 7) {
+      r = parseInt(hex.slice(1, 3), 16);
+      g = parseInt(hex.slice(3, 5), 16);
+      b = parseInt(hex.slice(5, 7), 16);
+    }
+    r /= 255; g /= 255; b /= 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h = 0, s = 0, l = (max + min) / 2;
+
+    if (max !== min) {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+        case g: h = (b - r) / d + 2; break;
+        case b: h = (r - g) / d + 4; break;
+      }
+      h /= 6;
+    }
+
+    h = Math.round(h * 360);
+    s = Math.round(s * 100);
+    l = Math.round(l * 100);
+    
+    return `hsl(${h} ${s}% ${l}%)`;
+  }
+  
+  const hslToHex = (hsl: string): string => {
+    const hslValues = hsl.match(/(\d+)/g);
+    if (!hslValues || hslValues.length < 3) return '#000000';
+
+    let h = parseInt(hslValues[0]);
+    let s = parseInt(hslValues[1]);
+    let l = parseInt(hslValues[2]);
+
+    s /= 100;
+    l /= 100;
+
+    const c = (1 - Math.abs(2 * l - 1)) * s;
+    const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+    const m = l - c/2;
+    let r = 0, g = 0, b = 0;
+
+    if (h >= 0 && h < 60) { [r, g, b] = [c, x, 0]; } 
+    else if (h >= 60 && h < 120) { [r, g, b] = [x, c, 0]; } 
+    else if (h >= 120 && h < 180) { [r, g, b] = [0, c, x]; }
+    else if (h >= 180 && h < 240) { [r, g, b] = [0, x, c]; }
+    else if (h >= 240 && h < 300) { [r, g, b] = [x, 0, c]; }
+    else if (h >= 300 && h < 360) { [r, g, b] = [c, 0, x]; }
+    
+    r = Math.round((r + m) * 255);
+    g = Math.round((g + m) * 255);
+    b = Math.round((b + m) * 255);
+
+    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+  }
 
 
   return (
@@ -222,7 +295,7 @@ export function ControlPanel({
             <Settings className="h-5 w-5" /> Customize
           </div>
         </AccordionTrigger>
-        <AccordionContent className="pt-2">
+        <AccordionContent className="pt-2 space-y-4">
           <Card>
             <CardHeader><CardTitle>Sections</CardTitle></CardHeader>
             <CardContent className="space-y-2">
@@ -244,6 +317,35 @@ export function ControlPanel({
               <Button onClick={addCustomSection} className="w-full mt-4">
                 <PlusCircle className="mr-2 h-4 w-4" /> Add Custom Section
               </Button>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader><CardTitle className="flex items-center gap-2"><Palette/> Theme</CardTitle></CardHeader>
+            <CardContent className="grid gap-4">
+              {(Object.keys(resumeData.theme) as (keyof ResumeData['theme'])[]).filter(k => k.includes('Color')).map(key => (
+                  <div key={key} className="grid grid-cols-3 items-center gap-4">
+                  <Label htmlFor={key} className="capitalize">{key.replace('Color', '')}</Label>
+                  <Input
+                    id={key}
+                    type="color"
+                    value={hslToHex(resumeData.theme[key])}
+                    onChange={(e) => handleThemeChange(key, hexToHsl(e.target.value))}
+                    className="col-span-2 h-8 p-1"
+                  />
+                </div>
+              ))}
+              <div className="grid grid-cols-3 items-center gap-4">
+                <Label htmlFor="borderWidth">Border Width</Label>
+                 <Slider
+                    id="borderWidth"
+                    min={0}
+                    max={8}
+                    step={1}
+                    value={[resumeData.theme.borderWidth]}
+                    onValueChange={handleBorderWidthChange}
+                    className="col-span-2"
+                  />
+              </div>
             </CardContent>
           </Card>
         </AccordionContent>

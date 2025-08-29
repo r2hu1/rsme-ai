@@ -22,6 +22,7 @@ export interface ResumeData extends Omit<ParseExistingResumeOutput, 'experience'
     accentColor: string;
     textColor: string;
     mutedTextColor: string;
+    borderWidth: number;
   };
 }
 

@@ -97,6 +97,7 @@ const initialResume: ResumeData = {
     accentColor: 'hsl(180 55% 46%)',
     textColor: 'hsl(210 10% 23%)',
     mutedTextColor: 'hsl(210 20% 45%)',
+    borderWidth: 2,
   },
 };
 
@@ -226,113 +227,11 @@ export default function Home() {
     }
   };
 
-  const handleThemeChange = (colorType: keyof ResumeData['theme'], value: string) => {
-    handleResumeUpdate({
-      theme: { ...resumeData.theme, [colorType]: value }
-    });
-  };
-  
-  const hexToHsl = (hex: string): string => {
-    let r = 0, g = 0, b = 0;
-    if (hex.length === 4) {
-      r = parseInt(hex[1] + hex[1], 16);
-      g = parseInt(hex[2] + hex[2], 16);
-      b = parseInt(hex[3] + hex[3], 16);
-    } else if (hex.length === 7) {
-      r = parseInt(hex.slice(1, 3), 16);
-      g = parseInt(hex.slice(3, 5), 16);
-      b = parseInt(hex.slice(5, 7), 16);
-    }
-    r /= 255; g /= 255; b /= 255;
-    const max = Math.max(r, g, b), min = Math.min(r, g, b);
-    let h = 0, s = 0, l = (max + min) / 2;
-
-    if (max !== min) {
-      const d = max - min;
-      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-      switch (max) {
-        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-        case g: h = (b - r) / d + 2; break;
-        case b: h = (r - g) / d + 4; break;
-      }
-      h /= 6;
-    }
-
-    h = Math.round(h * 360);
-    s = Math.round(s * 100);
-    l = Math.round(l * 100);
-    
-    return `hsl(${h} ${s}% ${l}%)`;
-  }
-  
-  const hslToHex = (hsl: string): string => {
-    const hslValues = hsl.match(/(\d+)/g);
-    if (!hslValues || hslValues.length < 3) return '#000000';
-
-    let h = parseInt(hslValues[0]);
-    let s = parseInt(hslValues[1]);
-    let l = parseInt(hslValues[2]);
-
-    s /= 100;
-    l /= 100;
-
-    const c = (1 - Math.abs(2 * l - 1)) * s;
-    const x = c * (1 - Math.abs((h / 60) % 2 - 1));
-    const m = l - c/2;
-    let r = 0, g = 0, b = 0;
-
-    if (h >= 0 && h < 60) { [r, g, b] = [c, x, 0]; } 
-    else if (h >= 60 && h < 120) { [r, g, b] = [x, c, 0]; } 
-    else if (h >= 120 && h < 180) { [r, g, b] = [0, c, x]; }
-    else if (h >= 180 && h < 240) { [r, g, b] = [0, x, c]; }
-    else if (h >= 240 && h < 300) { [r, g, b] = [x, 0, c]; }
-    else if (h >= 300 && h < 360) { [r, g, b] = [c, 0, x]; }
-    
-    r = Math.round((r + m) * 255);
-    g = Math.round((g + m) * 255);
-    b = Math.round((b + m) * 255);
-
-    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-  }
-
-
   return (
     <div className="flex h-screen w-full flex-col bg-background">
       <header className="flex h-16 items-center justify-between border-b px-4 lg:px-6 no-print">
         <Logo />
         <div className="flex items-center gap-2">
-           <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline">
-                <Palette className="mr-2 h-4 w-4" />
-                Theme
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-80">
-              <div className="grid gap-4">
-                <div className="space-y-2">
-                  <h4 className="font-medium leading-none">Customize Theme</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Adjust the colors of your resume.
-                  </p>
-                </div>
-                <div className="grid gap-2">
-                  {(Object.keys(resumeData.theme) as (keyof ResumeData['theme'])[]).map(key => (
-                     <div key={key} className="grid grid-cols-3 items-center gap-4">
-                      <Label htmlFor={key} className="capitalize">{key.replace('Color', '')}</Label>
-                      <Input
-                        id={key}
-                        type="color"
-                        value={hslToHex(resumeData.theme[key])}
-                        onChange={(e) => handleThemeChange(key, hexToHsl(e.target.value))}
-                        className="col-span-2 h-8 p-1"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
           <Button variant="outline" onClick={() => window.print()}>
             <Printer className="mr-2 h-4 w-4" />
             Print / Export PDF
@@ -364,5 +263,3 @@ export default function Home() {
     </div>
   );
 }
-
-    

@@ -120,7 +120,8 @@ const DraggableSection = ({ section, resume, onUpdate, children }: { section: Se
   return (
      <section ref={setNodeRef} style={style} className="relative group/section">
         <div
-          className="flex items-center gap-3 text-lg font-semibold font-headline border-b-2 border-primary pb-2 mb-4"
+          className="flex items-center gap-3 text-lg font-semibold font-headline border-primary pb-2 mb-4"
+          style={{ borderBottomWidth: resume.theme.borderWidth }}
         >
           <EditableField value={section.title} onSave={handleTitleUpdate} as="h2" className="flex-grow" />
            <div className="flex items-center gap-1 no-print">
@@ -140,7 +141,7 @@ const DraggableSection = ({ section, resume, onUpdate, children }: { section: Se
 }
 
 export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpdate: (newData: Partial<ResumeData>) => void }) {
-  const { name, email, phone, summary, experience, education, skills, projects, sections } = resume;
+  const { name, email, phone, summary, experience, education, skills, projects, sections, theme } = resume;
 
   const handleUpdate = (path: string, value: any) => {
     onUpdate(produce(resume, draft => {
@@ -323,7 +324,7 @@ export function ResumePreview({ resume, onUpdate }: { resume: ResumeData, onUpda
     <div id="resume-preview" className="w-full h-full bg-card rounded-lg shadow-lg overflow-y-auto p-8 lg:p-12 text-card-foreground">
       <div className="flex flex-col gap-8">
         {/* Header */}
-        <header className="text-center border-b pb-6">
+        <header className="text-center border-primary pb-6" style={{ borderBottomWidth: theme.borderWidth }}>
           {name != null && <h1 className="text-4xl font-bold font-headline tracking-tight"><EditableField value={name} onSave={(v) => handleUpdate('name', v)} as="h1" /></h1>}
           <div className="flex justify-center items-center gap-6 mt-3 text-sm text-muted-foreground">
             {email != null && (
