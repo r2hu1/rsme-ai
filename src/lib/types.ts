@@ -138,3 +138,19 @@ export interface ResumeData extends Omit<ParseExistingResumeOutput, 'experience'
 export type Experience = z.infer<typeof ExperienceSchema>;
 export type Education = z.infer<typeof EducationSchema>;
 export type Project = z.infer<typeof ProjectSchema>;
+
+
+export interface AIConfiguration {
+  apiKey: string;
+  model: string;
+}
+
+export interface UserSettings {
+  aiConfig: AIConfiguration;
+}
+
+export const AVAILABLE_MODELS = [
+  { id: 'googleai/gemini-1.5-flash', name: 'Gemini 1.5 Flash' },
+  { id: 'googleai/gemini-1.5-pro', name: 'Gemini 1.5 Pro' }, 
+  { id: 'googleai/gemini-1.5-pro-002', name: 'Gemini 1.5 Pro (Latest)' },
+] as const;
